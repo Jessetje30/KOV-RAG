@@ -188,3 +188,7 @@ __marimo__/
 
 # Abstra
 .abstra/
+
+# Security / Admin Tools (local development only, never deploy)
+backend/create_admin.py
+backend/start_backend.sh
