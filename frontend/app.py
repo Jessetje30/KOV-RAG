@@ -245,6 +245,7 @@ function handleEnterKey(event) {
 
 // Re-run when Streamlit reruns (on interaction)
 const observer = new MutationObserver(function(mutations) {
+    applyDarkModeStyles();
     fixPasswordTabOrder();
     enableEnterToSubmit();
 });
