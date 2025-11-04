@@ -27,20 +27,7 @@ env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
 from db.base import SessionLocal, engine, Base
-from db.models import UserDB, UserRole
-import bcrypt
-
-def hash_password(password: str) -> str:
-    """Hash password using bcrypt directly, handling 72-byte limit."""
-    # Truncate to 72 bytes if needed
-    password_bytes = password.encode('utf-8')
-    if len(password_bytes) > 72:
-        password_bytes = password_bytes[:72]
-
-    # Hash with bcrypt
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password_bytes, salt)
-    return hashed.decode('utf-8')
+from db.models import UserDB, UserRole, pwd_context, truncate_password_for_bcrypt
 
 # Default admin credentials
 DEFAULT_ADMIN_EMAIL = "admin@kov-rag.nl"
@@ -78,8 +65,9 @@ def create_default_admin():
             else:
                 print(f"  User already has admin role")
         else:
-            # Hash password
-            hashed_password = hash_password(DEFAULT_ADMIN_PASSWORD)
+            # Hash password using the same method as the rest of the application
+            password_truncated = truncate_password_for_bcrypt(DEFAULT_ADMIN_PASSWORD)
+            hashed_password = pwd_context.hash(password_truncated)
 
             # Create admin user
             print(f"Creating new admin user: {DEFAULT_ADMIN_EMAIL}")
