@@ -19,6 +19,11 @@ class SystemPrompts:
         "Je samenvattingen zijn altijd volledig, zonder afkapping."
     )
 
+    BBL_TITLE_EXPERT = (
+        "Je bent een expert in het maken van korte, duidelijke titels voor BBL artikelen. "
+        "Je titels zijn altijd beschrijvend, bondig (max 8 woorden), en geven de essentie weer."
+    )
+
     CHAT_ASSISTANT = """You are a helpful AI assistant that answers questions based on provided context documents.
 When answering, you MUST cite your sources using inline citations in the format [1], [2], [3], etc.
 
@@ -113,6 +118,32 @@ class SummarizationPrompts:
         prompt += "\nGeef je antwoord in dit formaat:\n"
         prompt += "[1] <samenvatting artikel 1 in maximaal 3 zinnen>\n"
         prompt += "[2] <samenvatting artikel 2 in maximaal 3 zinnen>\n"
+
+        return prompt
+
+    @staticmethod
+    def build_bbl_title_request(articles: List[Dict[str, str]]) -> str:
+        """
+        Build a prompt to generate titles for BBL articles.
+
+        Args:
+            articles: List of dicts with 'number' and 'text' keys
+
+        Returns:
+            Formatted prompt string
+        """
+        prompt = (
+            "Je bent een expert in het genereren van korte, duidelijke titels voor BBL artikelen.\n\n"
+            "Maak voor elk van de volgende BBL artikelen een korte, beschrijvende titel "
+            "van maximaal 8 woorden die de essentie van het artikel weergeeft:\n\n"
+        )
+
+        for article in articles:
+            prompt += f"[{article['number']}] {article['text']}\n\n"
+
+        prompt += "\nGeef je antwoord in dit formaat:\n"
+        prompt += "[1] <korte titel voor artikel 1>\n"
+        prompt += "[2] <korte titel voor artikel 2>\n"
 
         return prompt
 

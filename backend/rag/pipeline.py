@@ -16,6 +16,7 @@ from rag.text_chunker import TextChunker
 from rag.vector_store import VectorStore
 from rag.llm.openai_provider import OpenAILLMProvider
 from rag.llm.prompts import QueryPrompts
+from cache import query_cache
 
 logger = logging.getLogger(__name__)
 
@@ -121,10 +122,15 @@ class RAGPipeline:
             Tuple of (answer, sources, processing_time)
         """
         start_time = time.time()
-        
+
         # Validate top_k
         top_k = max(1, min(top_k, MAX_TOP_K))
-        
+
+        # Check cache first
+        cached_result = query_cache.get(user_id, query_text, top_k)
+        if cached_result is not None:
+            return cached_result
+
         collection_name = self._get_collection_name(user_id)
         
         # Get query embedding
@@ -182,19 +188,24 @@ class RAGPipeline:
         
         # Generate answer
         answer = self.llm_provider.generate_answer(prompt, max_length=1024)
-        
-        # Generate summaries
+
+        # Generate summaries and titles in parallel for better performance
         source_texts = [source["text"] for source in sources]
-        summaries = self.llm_provider.generate_summaries(source_texts)
-        
-        # Add summaries to sources
-        for source, summary in zip(sources, summaries):
+        summaries, titles = self.llm_provider.generate_summaries_and_titles_parallel(source_texts)
+
+        # Add summaries and titles to sources
+        for source, summary, title in zip(sources, summaries, titles):
             source["summary"] = summary
-        
+            source["title"] = title
+
         processing_time = time.time() - start_time
         logger.info(f"Query processed in {processing_time:.2f}s with {len(sources)} sources")
-        
-        return answer, sources, processing_time
+
+        # Cache the result
+        result = (answer, sources, processing_time)
+        query_cache.set(user_id, query_text, top_k, result)
+
+        return result
 
     def query_with_chat(
         self,

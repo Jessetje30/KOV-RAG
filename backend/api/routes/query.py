@@ -54,7 +54,8 @@ async def query_documents(
                 filename=source["filename"],
                 score=source["score"],
                 chunk_index=source["chunk_index"],
-                summary=source.get("summary")  # AI-generated summary
+                summary=source.get("summary"),  # AI-generated summary
+                title=source.get("title")  # AI-generated title
             )
             for source in sources
         ]

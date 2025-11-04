@@ -104,9 +104,9 @@ st.markdown("""
     }
     [data-testid="stAppViewContainer"][data-theme="dark"] .source-box,
     body[data-theme="dark"] .source-box {
-        background-color: #2b2b2b !important;
-        border-color: #404040 !important;
-        color: #e0e0e0 !important;
+        background-color: #000000 !important;
+        border-color: #333333 !important;
+        color: #ffffff !important;
     }
     [data-testid="stAppViewContainer"][data-theme="dark"] .main-header,
     body[data-theme="dark"] .main-header {
@@ -135,9 +135,9 @@ st.markdown("""
         }
         .stApp[data-theme="dark"] .source-box,
         .stApp .source-box {
-            background-color: #2b2b2b !important;
-            border-color: #404040 !important;
-            color: #e0e0e0 !important;
+            background-color: #000000 !important;
+            border-color: #333333 !important;
+            color: #ffffff !important;
         }
         .stApp[data-theme="dark"] .main-header,
         .stApp .main-header {
@@ -570,16 +570,23 @@ def show_query_page():
 
             # Display sources with AI-generated summary and expandable full text
             for idx, source in enumerate(response["sources"], 1):
-                # Build title from artikel metadata
-                artikel_label = source.get("artikel_label", "")
-                artikel_titel = source.get("artikel_titel", "")
+                # Use AI-generated title if available, otherwise fall back to metadata
+                ai_title = source.get("title")
 
-                if artikel_label and artikel_titel:
-                    title = f"{idx}. {artikel_label} - {artikel_titel}"
-                elif artikel_label:
-                    title = f"{idx}. {artikel_label}"
+                if ai_title:
+                    # Use AI-generated title (GPT-4-turbo)
+                    title = f"{idx}. {ai_title}"
                 else:
-                    title = f"{idx}. BBL Artikel"
+                    # Fallback: Build title from artikel metadata
+                    artikel_label = source.get("artikel_label", "")
+                    artikel_titel = source.get("artikel_titel", "")
+
+                    if artikel_label and artikel_titel:
+                        title = f"{idx}. {artikel_label} - {artikel_titel}"
+                    elif artikel_label:
+                        title = f"{idx}. {artikel_label}"
+                    else:
+                        title = f"{idx}. BBL Artikel"
 
                 st.markdown(f"#### 📄 {title}")
 

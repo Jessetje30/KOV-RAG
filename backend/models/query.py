@@ -40,6 +40,7 @@ class SourceChunk(BaseModel):
     score: float
     chunk_index: int
     summary: str | None = None  # AI-generated summary
+    title: str | None = None  # AI-generated title
 
 
 class QueryResponse(BaseModel):

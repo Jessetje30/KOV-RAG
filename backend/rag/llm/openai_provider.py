@@ -1,6 +1,8 @@
 """OpenAI LLM provider implementation."""
+import asyncio
 import logging
-from typing import List
+from typing import List, Tuple
+from concurrent.futures import ThreadPoolExecutor
 
 from openai import OpenAI
 
@@ -156,6 +158,75 @@ class OpenAILLMProvider(BaseLLMProvider):
             logger.error(f"Error generating summaries: {str(e)}")
             # Fallback to longer truncation (300 chars for ~3 sentences)
             return [text[:300] + "..." if len(text) > 300 else text for text in texts]
+
+    def generate_titles(self, texts: List[str]) -> List[str]:
+        """
+        Generate concise titles for multiple texts using OpenAI GPT-4-turbo.
+
+        Args:
+            texts: List of texts to generate titles for
+
+        Returns:
+            List of titles (one per text)
+        """
+        try:
+            # Build prompt for batch title generation using centralized prompts
+            articles = [{"number": i, "text": text} for i, text in enumerate(texts, 1)]
+            titles_prompt = SummarizationPrompts.build_bbl_title_request(articles)
+
+            response = self.client.chat.completions.create(
+                model="gpt-4-turbo",  # Use GPT-4-turbo for titles
+                messages=[
+                    {"role": "system", "content": SystemPrompts.BBL_TITLE_EXPERT},
+                    {"role": "user", "content": titles_prompt}
+                ],
+                max_completion_tokens=400  # Titles are short
+            )
+
+            titles_text = response.choices[0].message.content
+
+            # Parse titles from response
+            titles = []
+            lines = titles_text.strip().split('\n')
+            for line in lines:
+                if line.strip() and line.strip().startswith('['):
+                    # Extract title after the [N] prefix
+                    parts = line.split(']', 1)
+                    if len(parts) > 1:
+                        titles.append(parts[1].strip())
+
+            # Fallback: if parsing failed, return first 50 chars of each text
+            if len(titles) != len(texts):
+                logger.warning(f"Title parsing failed, using fallback. Expected {len(texts)}, got {len(titles)}")
+                titles = [text[:50] + "..." if len(text) > 50 else text for text in texts]
+
+            return titles
+
+        except Exception as e:
+            logger.error(f"Error generating titles: {str(e)}")
+            # Fallback to truncation (50 chars for title)
+            return [text[:50] + "..." if len(text) > 50 else text for text in texts]
+
+    def generate_summaries_and_titles_parallel(self, texts: List[str]) -> Tuple[List[str], List[str]]:
+        """
+        Generate summaries and titles in parallel for better performance.
+
+        Args:
+            texts: List of texts to process
+
+        Returns:
+            Tuple of (summaries, titles)
+        """
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            # Submit both tasks to run in parallel
+            summaries_future = executor.submit(self.generate_summaries, texts)
+            titles_future = executor.submit(self.generate_titles, texts)
+
+            # Wait for both to complete
+            summaries = summaries_future.result()
+            titles = titles_future.result()
+
+        return summaries, titles
 
     def health_check(self) -> bool:
         """
