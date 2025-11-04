@@ -1,0 +1,82 @@
+"""SQLAlchemy database models."""
+from datetime import datetime, timezone
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, JSON
+from sqlalchemy.orm import relationship
+from passlib.context import CryptContext
+
+from db.base import Base
+
+# Password hashing context
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Helper function for timezone-aware UTC datetime
+def utc_now():
+    """Return current UTC time with timezone info."""
+    return datetime.now(timezone.utc)
+
+# Helper function for password truncation (bcrypt 72-byte limit)
+def truncate_password_for_bcrypt(password: str) -> str:
+    """
+    Truncate password to 72 bytes for bcrypt compatibility.
+    """
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        password_bytes = password_bytes[:72]
+        while len(password_bytes) > 0:
+            try:
+                password_truncated = password_bytes.decode('utf-8')
+                break
+            except UnicodeDecodeError:
+                password_bytes = password_bytes[:-1]
+    else:
+        password_truncated = password
+    return password_truncated
+
+
+class UserDB(Base):
+    """SQLAlchemy model for users table."""
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(50), unique=True, index=True, nullable=False)
+    email = Column(String(100), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=utc_now)
+
+    # Relationships
+    chat_sessions = relationship("ChatSessionDB", back_populates="user", cascade="all, delete-orphan")
+
+    def verify_password(self, password: str) -> bool:
+        """Verify a password against the hashed password."""
+        password_truncated = truncate_password_for_bcrypt(password)
+        return pwd_context.verify(password_truncated, self.hashed_password)
+
+
+class ChatSessionDB(Base):
+    """SQLAlchemy model for chat_sessions table."""
+    __tablename__ = "chat_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    title = Column(String(200), nullable=False)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
+
+    # Relationships
+    user = relationship("UserDB", back_populates="chat_sessions")
+    messages = relationship("ChatMessageDB", back_populates="session", cascade="all, delete-orphan")
+
+
+class ChatMessageDB(Base):
+    """SQLAlchemy model for chat_messages table."""
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("chat_sessions.id"), nullable=False, index=True)
+    role = Column(String(20), nullable=False)  # 'user' or 'assistant'
+    content = Column(Text, nullable=False)
+    sources = Column(JSON, nullable=True)  # JSON array of source citations
+    created_at = Column(DateTime, default=utc_now)
+
+    # Relationships
+    session = relationship("ChatSessionDB", back_populates="messages")

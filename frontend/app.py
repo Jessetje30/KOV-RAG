@@ -1,0 +1,665 @@
+"""
+Streamlit frontend for RAG Application.
+Provides user interface for authentication, document management, and querying.
+"""
+import os
+import streamlit as st
+
+# Page configuration - MUST BE ABSOLUTE FIRST STREAMLIT COMMAND
+st.set_page_config(
+    page_title="BBL RAG - Kijk op Veiligheid",
+    page_icon="🏗️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Now import other modules (some may use Streamlit internally)
+import requests
+from datetime import datetime
+from typing import Optional, Dict, Any
+from streamlit_cookies_manager import EncryptedCookieManager
+
+# Configuration
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+
+# Initialize cookie manager for persistent login
+COOKIE_PASSWORD = os.getenv("COOKIE_ENCRYPTION_KEY")
+if not COOKIE_PASSWORD:
+    raise ValueError(
+        "COOKIE_ENCRYPTION_KEY environment variable must be set. "
+        "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+    )
+
+cookies = EncryptedCookieManager(
+    prefix="rag_app_",
+    password=COOKIE_PASSWORD
+)
+
+if not cookies.ready():
+    st.stop()
+
+# Custom CSS
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    .success-box {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        margin: 1rem 0;
+    }
+    .error-box {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        margin: 1rem 0;
+    }
+    .info-box {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+        margin: 1rem 0;
+    }
+    .source-box {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        margin: 0.5rem 0;
+    }
+
+    /* Dark theme support */
+    @media (prefers-color-scheme: dark) {
+        .success-box {
+            background-color: #1e4620;
+            border-color: #2d5a2e;
+            color: #a3d9a5;
+        }
+        .error-box {
+            background-color: #4a1f1f;
+            border-color: #6b2c2c;
+            color: #f5a3a3;
+        }
+        .info-box {
+            background-color: #1a3a42;
+            border-color: #2a4f5a;
+            color: #a3d5e6;
+        }
+        .source-box {
+            background-color: #2a2a2a;
+            border-color: #3a3a3a;
+            color: #e0e0e0;
+        }
+    }
+
+    /* Streamlit dark theme detection */
+    [data-theme="dark"] .success-box {
+        background-color: #1e4620;
+        border-color: #2d5a2e;
+        color: #a3d9a5;
+    }
+    [data-theme="dark"] .error-box {
+        background-color: #4a1f1f;
+        border-color: #6b2c2c;
+        color: #f5a3a3;
+    }
+    [data-theme="dark"] .info-box {
+        background-color: #1a3a42;
+        border-color: #2a4f5a;
+        color: #a3d5e6;
+    }
+    [data-theme="dark"] .source-box {
+        background-color: #2a2a2a;
+        border-color: #3a3a3a;
+        color: #e0e0e0;
+    }
+</style>
+
+<script>
+// Fix tab navigation: remove password visibility toggle buttons from tab order
+document.addEventListener('DOMContentLoaded', function() {
+    fixPasswordTabOrder();
+    enableEnterToSubmit();
+});
+
+// Also run after a short delay for Streamlit's dynamic rendering
+setTimeout(function() {
+    fixPasswordTabOrder();
+    enableEnterToSubmit();
+}, 1000);
+
+// Run again after longer delay to catch late-loading elements
+setTimeout(function() {
+    enableEnterToSubmit();
+}, 2000);
+
+function fixPasswordTabOrder() {
+    // Find all password input containers
+    const passwordInputs = document.querySelectorAll('input[type="password"]');
+
+    passwordInputs.forEach(input => {
+        // Find the parent container
+        const container = input.closest('div[data-baseweb="input"]') || input.parentElement;
+
+        // Find all buttons within this container (the visibility toggle)
+        const buttons = container.querySelectorAll('button');
+
+        buttons.forEach(button => {
+            // Remove from tab order
+            button.setAttribute('tabindex', '-1');
+        });
+    });
+
+    console.log('Password field tab order fixed');
+}
+
+function enableEnterToSubmit() {
+    // Find all textareas in forms
+    const textareas = document.querySelectorAll('form textarea');
+
+    textareas.forEach(textarea => {
+        // Remove existing listener to avoid duplicates
+        textarea.removeEventListener('keydown', handleEnterKey);
+        // Add new listener
+        textarea.addEventListener('keydown', handleEnterKey);
+    });
+
+    console.log('Enter-to-submit enabled for forms');
+}
+
+function handleEnterKey(event) {
+    // Check if Enter was pressed (without Shift, which creates new line)
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+
+        // Find the submit button in the same form
+        const form = event.target.closest('form');
+        if (form) {
+            const submitButton = form.querySelector('button[kind="primary"], button[type="submit"]');
+            if (submitButton) {
+                submitButton.click();
+                console.log('Form submitted via Enter key');
+            }
+        }
+    }
+}
+
+// Re-run when Streamlit reruns (on interaction)
+const observer = new MutationObserver(function(mutations) {
+    fixPasswordTabOrder();
+    enableEnterToSubmit();
+});
+observer.observe(document.body, { childList: true, subtree: true });
+</script>
+""", unsafe_allow_html=True)
+
+# API Helper Functions
+def api_request(endpoint: str, method: str = "GET", data: Dict = None, files: Dict = None, auth: bool = False) -> Optional[Dict[str, Any]]:
+    """
+    Make API request to backend.
+
+    Args:
+        endpoint: API endpoint path
+        method: HTTP method (GET, POST, DELETE)
+        data: Request data (JSON)
+        files: Files to upload
+        auth: Whether to include authentication token
+
+    Returns:
+        Response data or None if error
+    """
+    url = f"{BACKEND_URL}{endpoint}"
+    headers = {}
+
+    if auth and st.session_state.token:
+        headers["Authorization"] = f"Bearer {st.session_state.token}"
+
+    try:
+        if method == "GET":
+            response = requests.get(url, headers=headers)
+        elif method == "POST":
+            if files:
+                response = requests.post(url, headers=headers, files=files)
+            else:
+                response = requests.post(url, headers=headers, json=data)
+        elif method == "DELETE":
+            response = requests.delete(url, headers=headers)
+        else:
+            st.error(f"Unsupported HTTP method: {method}")
+            return None
+
+        if response.status_code in [200, 201]:
+            return response.json()
+        else:
+            error_detail = response.json().get("detail", "Unknown error")
+            st.error(f"Error: {error_detail}")
+            return None
+
+    except requests.exceptions.ConnectionError:
+        st.error("Cannot connect to backend server. Please ensure the backend is running.")
+        return None
+    except Exception as e:
+        st.error(f"Request failed: {str(e)}")
+        return None
+
+
+def login(username: str, password: str) -> bool:
+    """Login user and store token."""
+    response = api_request(
+        "/api/auth/login",
+        method="POST",
+        data={"username": username, "password": password}
+    )
+
+    if response:
+        st.session_state.token = response["access_token"]
+        # Save token to cookie for persistent login
+        cookies['auth_token'] = response["access_token"]
+        cookies.save()
+
+        # Get user info
+        user_info = api_request("/api/auth/me", auth=True)
+        if user_info:
+            st.session_state.user = user_info
+            return True
+
+    return False
+
+
+def register(username: str, email: str, password: str) -> bool:
+    """Register new user."""
+    response = api_request(
+        "/api/auth/register",
+        method="POST",
+        data={"username": username, "email": email, "password": password}
+    )
+
+    if response:
+        st.session_state.token = response["access_token"]
+        # Save token to cookie for persistent login
+        cookies['auth_token'] = response["access_token"]
+        cookies.save()
+
+        # Get user info
+        user_info = api_request("/api/auth/me", auth=True)
+        if user_info:
+            st.session_state.user = user_info
+            return True
+
+    return False
+
+
+def logout():
+    """Logout user."""
+    st.session_state.token = None
+    st.session_state.user = None
+    st.session_state.page = 'login'
+    # Clear cookie
+    cookies['auth_token'] = ''
+    cookies.save()
+
+
+# Session state initialization with cookie support
+if 'token' not in st.session_state:
+    # Try to load token from cookie
+    st.session_state.token = cookies.get('auth_token', None)
+if 'user' not in st.session_state:
+    st.session_state.user = None
+if 'page' not in st.session_state:
+    st.session_state.page = 'login'
+
+# If we have a token from cookie but no user info, fetch user info
+if st.session_state.token and not st.session_state.user:
+    user_info = api_request("/api/auth/me", auth=True)
+    if user_info:
+        st.session_state.user = user_info
+        st.session_state.page = 'main'
+    else:
+        # Token is invalid, clear it
+        st.session_state.token = None
+        st.session_state.user = None
+        st.session_state.page = 'login'
+        cookies['auth_token'] = ''
+        cookies.save()
+
+
+# Page: Login/Register
+def show_auth_page():
+    """Display authentication page."""
+    st.markdown('<div class="main-header">🏗️ BBL RAG</div>', unsafe_allow_html=True)
+    st.markdown("### Kijk op Veiligheid - Besluit Bouwwerken Leefomgeving")
+    st.markdown("*Stel vragen over het BBL en krijg direct antwoord met artikelverwijzingen*")
+
+    tab1, tab2 = st.tabs(["Login", "Register"])
+
+    with tab1:
+        st.subheader("Login to Your Account")
+        with st.form("login_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submit = st.form_submit_button("Login")
+
+            if submit:
+                if not username or not password:
+                    st.error("Please enter both username and password")
+                else:
+                    with st.spinner("Logging in..."):
+                        if login(username, password):
+                            st.success("Login successful!")
+                            st.session_state.page = 'main'
+                            st.rerun()
+                        else:
+                            st.error("Login failed. Please check your credentials.")
+
+    with tab2:
+        st.subheader("Create New Account")
+        with st.form("register_form"):
+            new_username = st.text_input("Username", key="reg_username")
+            new_email = st.text_input("Email", key="reg_email")
+            new_password = st.text_input("Password", type="password", key="reg_password")
+            confirm_password = st.text_input("Confirm Password", type="password")
+            submit_reg = st.form_submit_button("Register")
+
+            if submit_reg:
+                if not all([new_username, new_email, new_password, confirm_password]):
+                    st.error("Please fill in all fields")
+                elif new_password != confirm_password:
+                    st.error("Passwords do not match")
+                elif len(new_password) < 8:
+                    st.error("Password must be at least 8 characters long")
+                else:
+                    with st.spinner("Creating account..."):
+                        if register(new_username, new_email, new_password):
+                            st.success("Registration successful!")
+                            st.session_state.page = 'main'
+                            st.rerun()
+                        else:
+                            st.error("Registration failed. Username or email may already exist.")
+
+
+# Page: Main Application
+def show_main_page():
+    """Display main application page."""
+    # Sidebar
+    with st.sidebar:
+        # BBL Branding
+        st.markdown("## 🏗️ BBL RAG")
+        st.markdown("**Kijk op Veiligheid**")
+        st.caption("Besluit Bouwwerken Leefomgeving")
+
+        st.markdown("---")
+
+        st.markdown(f"### Welkom, {st.session_state.user['username']}!")
+        st.markdown(f"**Email:** {st.session_state.user['email']}")
+
+        st.markdown("---")
+
+        # Navigation
+        page = st.radio(
+            "Navigation",
+            ["BBL Vragen Stellen", "BBL Documenten"],
+            label_visibility="collapsed"
+        )
+
+        st.markdown("---")
+
+        # Info over BBL versie
+        st.info("📚 **BBL Versie**: 2025-07-01\n\n602 artikelen beschikbaar")
+
+        st.markdown("---")
+
+        if st.button("Logout", use_container_width=True):
+            logout()
+            st.rerun()
+
+    # Main content
+    if page == "BBL Vragen Stellen":
+        show_query_page()
+    elif page == "BBL Documenten":
+        show_manage_documents_page()
+
+
+# Page: Query Documents
+def show_query_page():
+    """Display document query interface."""
+    st.markdown('<div class="main-header">🏗️ Stel BBL Vragen</div>', unsafe_allow_html=True)
+    st.markdown("*Stel vragen over het Besluit Bouwwerken Leefomgeving (BBL versie 2025-07-01)*")
+
+    # Check if user has any documents
+    documents_response = api_request("/api/documents", auth=True)
+    has_documents = documents_response and documents_response.get("total_count", 0) > 0
+
+    if not has_documents:
+        st.warning("⚠️ Geen BBL documenten beschikbaar.")
+        st.info("Het BBL moet worden geladen door een administrator. Neem contact op met de systeembeheerder.")
+        return
+
+    # Model information box
+    st.markdown("""
+    <div class="info-box">
+        <strong>🤖 Model:</strong> OpenAI GPT-5 (State-of-the-art reasoning model)<br>
+        <strong>📊 Embeddings:</strong> text-embedding-3-large (3072 dimensies)<br>
+        <strong>📚 Database:</strong> 602 BBL artikelen (versie 2025-07-01)
+    </div>
+    """, unsafe_allow_html=True)
+
+    # BBL Example questions
+    st.markdown("**💡 Voorbeeldvragen:**")
+    example_col1, example_col2 = st.columns(2)
+
+    with example_col1:
+        st.markdown("""
+        - Wat zijn de eisen voor brandveiligheid in kantoorgebouwen?
+        - Wat staat er in artikel 4.101 van het BBL?
+        - Wat zijn de MPG-eisen voor nieuwbouw?
+        """)
+
+    with example_col2:
+        st.markdown("""
+        - Welke constructieve veiligheidsregels gelden voor bouwwerken?
+        - Wat zijn de regels voor energieprestatie van gebouwen?
+        - Wat zijn de eisen voor ventilatie in verblijfsruimten?
+        """)
+
+    st.markdown("---")
+
+    # Query input
+    query = st.text_area(
+        "Jouw BBL Vraag",
+        placeholder="Bijvoorbeeld: Wat zijn de brandveiligheidseisen voor kantoren?",
+        height=100,
+        key="bbl_query_input",
+        max_chars=500
+    )
+
+    # Submit button
+    submit = st.button("🔍 Zoek in BBL", use_container_width=True)
+
+    if submit:
+        if not query.strip():
+            st.error("Voer een vraag in")
+        elif len(query.strip()) < 20:
+            st.error("Je vraag moet minimaal 20 tekens bevatten")
+        else:
+            with st.spinner("BBL doorzoeken..."):
+                # Beperk tot top 5 meest relevante artikelen
+                response = api_request(
+                    "/api/query",
+                    method="POST",
+                    data={"query": query, "top_k": 5},
+                    auth=True
+                )
+
+                if response:
+                    # Store response in session state
+                    st.session_state.query_response = response
+                else:
+                    st.session_state.query_response = None
+
+    # Display query results OUTSIDE the form
+    if 'query_response' in st.session_state and st.session_state.query_response:
+        response = st.session_state.query_response
+
+        # Display metadata
+        st.caption(f"⏱️ Verwerkingstijd: {response['processing_time_seconds']:.2f} seconden")
+
+        # Only display sources if there are any (relevance >= 0.4)
+        if response["sources"]:
+            # Display sources
+            st.markdown("### 📚 Gevonden BBL Artikelen")
+
+            # Display sources with AI-generated summary and expandable full text
+            for idx, source in enumerate(response["sources"], 1):
+                # Build title from artikel metadata
+                artikel_label = source.get("artikel_label", "")
+                artikel_titel = source.get("artikel_titel", "")
+
+                if artikel_label and artikel_titel:
+                    title = f"{idx}. {artikel_label} - {artikel_titel}"
+                elif artikel_label:
+                    title = f"{idx}. {artikel_label}"
+                else:
+                    title = f"{idx}. BBL Artikel"
+
+                st.markdown(f"#### 📄 {title}")
+
+                # Get AI-generated summary or fallback to longer truncation
+                summary = source.get("summary")
+                if not summary:
+                    # Fallback: show first 300 chars (~3 sentences)
+                    summary = source["text"][:300] + "..." if len(source["text"]) > 300 else source["text"]
+
+                full_text = source["text"]
+
+                # Show AI-generated summary in a styled box
+                st.markdown(f'<div class="source-box"><strong>🤖 AI Samenvatting (GPT-4-turbo):</strong><br>{summary}</div>', unsafe_allow_html=True)
+
+                # Full text in expander
+                with st.expander("📖 Lees volledige artikel"):
+                    st.markdown(f"**Document:** {source['filename']}")
+                    st.markdown(f"**Chunk:** {source['chunk_index']}")
+                    st.markdown("---")
+                    st.markdown(full_text)
+
+                st.markdown("")  # Add spacing between sources
+
+
+# Page: Upload Documents
+def show_upload_page():
+    """Display document upload interface."""
+    st.markdown('<div class="main-header">Upload Documents</div>', unsafe_allow_html=True)
+    st.markdown("Upload PDF, DOCX, or TXT files to make them searchable.")
+
+    st.markdown('<div class="info-box">Supported formats: PDF, DOCX, TXT<br>Maximum file size: 10MB</div>', unsafe_allow_html=True)
+
+    uploaded_file = st.file_uploader(
+        "Choose a file",
+        type=['pdf', 'docx', 'txt'],
+        help="Upload a document to add to your knowledge base"
+    )
+
+    if uploaded_file is not None:
+        # Display file info
+        st.markdown("#### File Information")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write(f"**Filename:** {uploaded_file.name}")
+        with col2:
+            st.write(f"**Size:** {uploaded_file.size / 1024:.2f} KB")
+
+        if st.button("Upload and Process", use_container_width=True):
+            with st.spinner("Uploading and processing document..."):
+                files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+
+                response = api_request(
+                    "/api/documents/upload",
+                    method="POST",
+                    files=files,
+                    auth=True
+                )
+
+                if response:
+                    st.success(response["message"])
+                    st.markdown(f"""
+                    **Document ID:** {response['document_id']}
+                    **Chunks Created:** {response['chunks_created']}
+                    **File Size:** {response['file_size'] / 1024:.2f} KB
+                    """)
+
+
+# Page: Manage Documents
+def show_manage_documents_page():
+    """Display document management interface."""
+    st.markdown('<div class="main-header">📚 BBL Documenten</div>', unsafe_allow_html=True)
+    st.markdown("*Overzicht van beschikbare BBL artikelen*")
+
+    # Refresh button
+    if st.button("Ververs Lijst"):
+        st.rerun()
+
+    # Get documents
+    with st.spinner("BBL documenten laden..."):
+        response = api_request("/api/documents", auth=True)
+
+    if response:
+        documents = response["documents"]
+
+        # Filter: alleen BBL documenten tonen
+        bbl_documents = [doc for doc in documents if doc['document_id'].startswith('BBL_')]
+        total_count = len(bbl_documents)
+
+        st.markdown(f"### BBL Artikelen ({total_count})")
+
+        if total_count == 0:
+            st.warning("⚠️ Geen BBL documenten gevonden.")
+            st.info("Het BBL moet worden geladen door een administrator.\n\nNeem contact op met de systeembeheerder.")
+        else:
+            # Display only BBL documents
+            for doc in bbl_documents:
+                with st.container():
+                    col1, col2, col3 = st.columns([3, 2, 1])
+
+                    with col1:
+                        st.markdown(f"**{doc['filename']}**")
+                        st.caption(f"ID: {doc['document_id'][:8]}...")
+
+                    with col2:
+                        st.write(f"Chunks: {doc['chunks_count']}")
+                        st.caption(f"Size: {doc['file_size'] / 1024:.2f} KB")
+
+                    with col3:
+                        if st.button("Delete", key=f"delete_{doc['document_id']}"):
+                            with st.spinner("Deleting..."):
+                                delete_response = api_request(
+                                    f"/api/documents/{doc['document_id']}",
+                                    method="DELETE",
+                                    auth=True
+                                )
+                                if delete_response:
+                                    st.success("Document deleted successfully!")
+                                    st.rerun()
+
+                    st.markdown("---")
+
+
+# Main App Logic
+def main():
+    """Main application entry point."""
+    if st.session_state.token is None or st.session_state.user is None:
+        show_auth_page()
+    else:
+        show_main_page()
+
+
+if __name__ == "__main__":
+    main()

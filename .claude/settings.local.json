@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "WebSearch",
+      "Bash(python3 -m py_compile:*)",
+      "Bash(python3:*)",
+      "Bash(backend/venv/bin/pip:*)",
+      "Bash(frontend/venv/bin/pip:*)",
+      "Bash(./venv/bin/pip:*)",
+      "Bash(./frontend/venv/bin/pip:*)",
+      "Bash(./backend/venv/bin/pip install:*)",
+      "Bash(./backend/venv/bin/pip:*)",
+      "Bash(./backend/venv/bin/python:*)",
+      "Bash(./frontend/venv/bin/python:*)",
+      "Read(//Users/jesse/PycharmProjects/fontysRAG/**)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
