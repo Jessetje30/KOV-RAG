@@ -5,68 +5,48 @@
 # ============================================
 
 # FastAPI and web server
-fastapi==0.121.0              # Latest stable (Nov 2025)
-uvicorn[standard]==0.34.0     # ASGI server with production extras
-python-multipart==0.0.20      # File upload support
+fastapi==0.121.0
+uvicorn[standard]==0.38.0
+python-multipart==0.0.20
 
 # Database
-sqlalchemy==2.0.36            # Async-capable ORM
-alembic==1.17.1              # Database migrations
+sqlalchemy==2.0.44
+alembic==1.17.1
 
 # Authentication and security
-pyjwt==2.10.1                # JWT token handling
-passlib[bcrypt]==1.7.5       # Password hashing (bcrypt 5.0 compatible)
-bcrypt==5.0.0                # Bcrypt 5.0 - performance improvements
-slowapi==0.1.9               # Rate limiting middleware
+pyjwt==2.10.1
+passlib[bcrypt]==1.7.4
+bcrypt==5.0.0
+slowapi==0.1.9
 
-# OpenAI API (Primary - Production RAG)
-openai==1.57.2               # Stable 1.x API (2.x has breaking changes)
+# OpenAI API
+openai==2.7.1
 
 # Qdrant vector database client
-qdrant-client==1.15.1        # Latest compatible with Python 3.12
+qdrant-client==1.15.1
 
 # Document processing
-PyMuPDF==1.26.5              # PDF parsing (latest for Python 3.12)
-python-docx==1.1.2           # Word document support
+PyMuPDF==1.26.5
+python-docx==1.2.0
 
 # Data validation
-pydantic==2.10.3             # FastAPI 0.121 compatibility
-pydantic[email]==2.10.3      # Email validation support
+pydantic==2.12.3
+pydantic[email]==2.12.3
 
 # Environment variables
-python-dotenv==1.0.1         # .env file loading
+python-dotenv==1.2.1
 
 # Email services
-resend==2.6.0                # Modern email API (2024+)
+resend==2.19.0
 
 # HTTP client
-# Note: httpx 0.28.x has compatibility issues with some packages
-# Using 0.27.x for maximum compatibility
-httpx==0.27.2                # Async HTTP client (used by OpenAI SDK)
+httpx==0.28.1
 
 # Utilities
-numpy==1.26.4                # NumPy (compatible with Python 3.12)
+numpy==2.3.4
 
 # Testing
-pytest==8.3.4                # Testing framework
-pytest-asyncio==0.24.0       # Async test support
-pytest-cov==6.0.0            # Coverage reporting
-pytest-mock==3.14.0          # Mocking utilities
-
-# ============================================
-# Version notes:
-# ============================================
-# Verified compatible: November 4, 2025
-#
-# Major versions:
-# - FastAPI 0.121.0: Latest with Pydantic 2.10 support
-# - OpenAI 1.57.2: Stable 1.x API. Upgrade to 2.x needs code changes
-# - Bcrypt 5.0.0: Performance improvements over 4.x
-# - Qdrant 1.15.1: Latest with Python 3.12 support
-# - PyMuPDF 1.26.5: Latest for Python 3.12
-# - httpx 0.27.2: Compatibility with ecosystem packages
-#
-# Compatibility notes:
-# - httpx kept at 0.27.2 for maximum compatibility
-# - All packages tested together
-# - Python 3.12+ required
+pytest==8.4.2
+pytest-asyncio==1.2.0
+pytest-cov==7.0.0
+pytest-mock==3.15.1
