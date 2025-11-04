@@ -22,7 +22,8 @@
       "Bash(git config:*)",
       "Bash(git pull:*)",
       "Bash(docker-compose config:*)",
-      "Bash(docker compose:*)"
+      "Bash(docker compose:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []
