@@ -1,17 +1,7 @@
 #!/usr/bin/env python3
 """
-Create Default Admin User (Non-Interactive)
-This script creates a default admin user without prompts.
-
-Usage:
-    python create_default_admin.py
-
-Or with Docker:
-    docker exec -it rag-backend python3 /app/create_default_admin.py
-
-Default credentials:
-    Email: admin@kov-rag.nl
-    Password: Admin123!ChangeMe
+Create Default Admin User - Direct bcrypt implementation
+Uses bcrypt directly to avoid passlib compatibility issues.
 """
 import sys
 import os
@@ -28,7 +18,7 @@ load_dotenv(dotenv_path=env_path)
 
 from db.base import SessionLocal, engine, Base
 from db.models import UserDB, UserRole
-from db.crud import UserRepository
+import bcrypt
 
 # Default admin credentials
 DEFAULT_ADMIN_EMAIL = "admin@kov-rag.nl"
@@ -36,8 +26,23 @@ DEFAULT_ADMIN_PASSWORD = "Admin123!ChangeMe"
 DEFAULT_ADMIN_USERNAME = "admin"
 
 
+def hash_password_direct(password: str) -> str:
+    """Hash password using bcrypt directly - no passlib."""
+    # Encode password and truncate to 72 bytes
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        password_bytes = password_bytes[:72]
+
+    # Generate salt and hash
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+
+    # Return as string (with bcrypt prefix $2b$)
+    return hashed.decode('utf-8')
+
+
 def create_default_admin():
-    """Create default admin user without prompts."""
+    """Create default admin user."""
     print("\n" + "="*60)
     print("Creating Default Admin User")
     print("="*60 + "\n")
@@ -66,11 +71,11 @@ def create_default_admin():
             else:
                 print(f"  User already has admin role")
         else:
-            # Hash password using the EXACT same method as UserRepository
-            hashed_password = UserRepository.hash_password(DEFAULT_ADMIN_PASSWORD)
+            # Hash password with direct bcrypt
+            print(f"Creating new admin user: {DEFAULT_ADMIN_EMAIL}")
+            hashed_password = hash_password_direct(DEFAULT_ADMIN_PASSWORD)
 
             # Create admin user
-            print(f"Creating new admin user: {DEFAULT_ADMIN_EMAIL}")
             admin_user = UserDB(
                 username=DEFAULT_ADMIN_USERNAME,
                 email=DEFAULT_ADMIN_EMAIL,
