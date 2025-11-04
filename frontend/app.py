@@ -15,6 +15,7 @@ st.set_page_config(
 
 # Now import other modules (some may use Streamlit internally)
 import requests
+import html
 from datetime import datetime
 from typing import Optional, Dict, Any
 from streamlit_cookies_manager import EncryptedCookieManager
@@ -38,14 +39,17 @@ cookies = EncryptedCookieManager(
 if not cookies.ready():
     st.stop()
 
-# Custom CSS
+# Custom CSS with proper dark mode support
 st.markdown("""
 <style>
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
         margin-bottom: 1rem;
+        color: var(--text-color);
     }
+
+    /* Light theme boxes */
     .success-box {
         padding: 1rem;
         border-radius: 0.5rem;
@@ -75,71 +79,116 @@ st.markdown("""
         border-radius: 0.5rem;
         background-color: #f8f9fa;
         border: 1px solid #dee2e6;
+        color: #212529;
         margin: 0.5rem 0;
     }
 
-    /* Dark theme support */
-    @media (prefers-color-scheme: dark) {
-        .success-box {
-            background-color: #1e4620;
-            border-color: #2d5a2e;
-            color: #a3d9a5;
-        }
-        .error-box {
-            background-color: #4a1f1f;
-            border-color: #6b2c2c;
-            color: #f5a3a3;
-        }
-        .info-box {
-            background-color: #1a3a42;
-            border-color: #2a4f5a;
-            color: #a3d5e6;
-        }
-        .source-box {
-            background-color: #2a2a2a;
-            border-color: #3a3a3a;
-            color: #e0e0e0;
-        }
+    /* Dark theme - using Streamlit's data-testid attribute on body */
+    [data-testid="stAppViewContainer"][data-theme="dark"] .success-box,
+    body[data-theme="dark"] .success-box {
+        background-color: #1e4620 !important;
+        border-color: #2d5a2e !important;
+        color: #a3d9a5 !important;
+    }
+    [data-testid="stAppViewContainer"][data-theme="dark"] .error-box,
+    body[data-theme="dark"] .error-box {
+        background-color: #4a1f1f !important;
+        border-color: #6b2c2c !important;
+        color: #f5a3a3 !important;
+    }
+    [data-testid="stAppViewContainer"][data-theme="dark"] .info-box,
+    body[data-theme="dark"] .info-box {
+        background-color: #1a3a42 !important;
+        border-color: #2a4f5a !important;
+        color: #a3d5e6 !important;
+    }
+    [data-testid="stAppViewContainer"][data-theme="dark"] .source-box,
+    body[data-theme="dark"] .source-box {
+        background-color: #2b2b2b !important;
+        border-color: #404040 !important;
+        color: #e0e0e0 !important;
+    }
+    [data-testid="stAppViewContainer"][data-theme="dark"] .main-header,
+    body[data-theme="dark"] .main-header {
+        color: #ffffff !important;
     }
 
-    /* Streamlit dark theme detection */
-    [data-theme="dark"] .success-box {
-        background-color: #1e4620;
-        border-color: #2d5a2e;
-        color: #a3d9a5;
-    }
-    [data-theme="dark"] .error-box {
-        background-color: #4a1f1f;
-        border-color: #6b2c2c;
-        color: #f5a3a3;
-    }
-    [data-theme="dark"] .info-box {
-        background-color: #1a3a42;
-        border-color: #2a4f5a;
-        color: #a3d5e6;
-    }
-    [data-theme="dark"] .source-box {
-        background-color: #2a2a2a;
-        border-color: #3a3a3a;
-        color: #e0e0e0;
+    /* Additional dark mode support using prefers-color-scheme */
+    @media (prefers-color-scheme: dark) {
+        .stApp[data-theme="dark"] .success-box,
+        .stApp .success-box {
+            background-color: #1e4620 !important;
+            border-color: #2d5a2e !important;
+            color: #a3d9a5 !important;
+        }
+        .stApp[data-theme="dark"] .error-box,
+        .stApp .error-box {
+            background-color: #4a1f1f !important;
+            border-color: #6b2c2c !important;
+            color: #f5a3a3 !important;
+        }
+        .stApp[data-theme="dark"] .info-box,
+        .stApp .info-box {
+            background-color: #1a3a42 !important;
+            border-color: #2a4f5a !important;
+            color: #a3d5e6 !important;
+        }
+        .stApp[data-theme="dark"] .source-box,
+        .stApp .source-box {
+            background-color: #2b2b2b !important;
+            border-color: #404040 !important;
+            color: #e0e0e0 !important;
+        }
+        .stApp[data-theme="dark"] .main-header,
+        .stApp .main-header {
+            color: #ffffff !important;
+        }
     }
 </style>
 
 <script>
+// Detect and apply dark mode
+function applyDarkModeStyles() {
+    const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const stApp = document.querySelector('.stApp');
+    const body = document.body;
+
+    if (stApp) {
+        if (isDark) {
+            stApp.setAttribute('data-theme', 'dark');
+            body.setAttribute('data-theme', 'dark');
+        } else {
+            stApp.setAttribute('data-theme', 'light');
+            body.setAttribute('data-theme', 'light');
+        }
+    }
+}
+
+// Apply dark mode on load
+applyDarkModeStyles();
+
+// Listen for theme changes
+if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyDarkModeStyles);
+}
+
 // Fix tab navigation: remove password visibility toggle buttons from tab order
 document.addEventListener('DOMContentLoaded', function() {
+    applyDarkModeStyles();
     fixPasswordTabOrder();
     enableEnterToSubmit();
 });
 
 // Also run after a short delay for Streamlit's dynamic rendering
 setTimeout(function() {
+    applyDarkModeStyles();
     fixPasswordTabOrder();
     enableEnterToSubmit();
 }, 1000);
 
 // Run again after longer delay to catch late-loading elements
 setTimeout(function() {
+    applyDarkModeStyles();
     enableEnterToSubmit();
 }, 2000);
 
@@ -541,8 +590,9 @@ def show_query_page():
 
                 full_text = source["text"]
 
-                # Show AI-generated summary in a styled box
-                st.markdown(f'<div class="source-box"><strong>🤖 AI Samenvatting (GPT-4-turbo):</strong><br>{summary}</div>', unsafe_allow_html=True)
+                # Show AI-generated summary in a styled box (HTML escaped for XSS protection)
+                summary_escaped = html.escape(summary)
+                st.markdown(f'<div class="source-box"><strong>🤖 AI Samenvatting (GPT-4-turbo):</strong><br>{summary_escaped}</div>', unsafe_allow_html=True)
 
                 # Full text in expander
                 with st.expander("📖 Lees volledige artikel"):

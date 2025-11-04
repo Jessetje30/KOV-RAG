@@ -1,7 +1,11 @@
 """Document management endpoints."""
 import os
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+import re
+from pathlib import Path
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from models import DocumentUploadResponse, DocumentListResponse, DocumentInfo, User
 from auth import get_current_user
@@ -9,7 +13,53 @@ from dependencies import get_rag_pipeline
 
 logger = logging.getLogger(__name__)
 
+# Rate limiter for document endpoints
+limiter = Limiter(key_func=get_remote_address)
+
 router = APIRouter(prefix="/api/documents", tags=["documents"])
+
+
+def sanitize_filename(filename: str) -> str:
+    """
+    Sanitize filename to prevent path traversal attacks.
+
+    Args:
+        filename: Original filename
+
+    Returns:
+        str: Sanitized filename with only the basename
+
+    Raises:
+        ValueError: If filename is empty or invalid
+    """
+    if not filename or not filename.strip():
+        raise ValueError("Filename cannot be empty")
+
+    # Get only the basename (removes any path components)
+    basename = Path(filename).name
+
+    # Remove any remaining path traversal patterns
+    basename = basename.replace("..", "").replace("/", "").replace("\\", "")
+
+    # Remove or replace invalid characters
+    # Allow: alphanumeric, dots, dashes, underscores, spaces
+    basename = re.sub(r'[^a-zA-Z0-9._\- ]', '_', basename)
+
+    # Ensure filename is not empty after sanitization
+    if not basename or basename.strip() in ["", ".", ".."]:
+        raise ValueError("Invalid filename after sanitization")
+
+    # Limit filename length
+    if len(basename) > 255:
+        # Keep extension if possible
+        name_parts = basename.rsplit('.', 1)
+        if len(name_parts) == 2:
+            name, ext = name_parts
+            basename = name[:250] + '.' + ext
+        else:
+            basename = basename[:255]
+
+    return basename
 
 # Maximum file size (from environment or default to 10MB)
 MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "10"))
@@ -17,7 +67,9 @@ MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
 
 @router.post("/upload", response_model=DocumentUploadResponse)
+@limiter.limit("10/minute")
 async def upload_document(
+    request: Request,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     rag_pipeline = Depends(get_rag_pipeline)
@@ -37,9 +89,18 @@ async def upload_document(
         HTTPException: If file processing fails
     """
     try:
+        # Sanitize filename to prevent path traversal
+        try:
+            safe_filename = sanitize_filename(file.filename)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid filename: {str(e)}"
+            )
+
         # Validate file extension
         allowed_extensions = ['pdf', 'docx', 'txt']
-        file_extension = file.filename.lower().split('.')[-1]
+        file_extension = safe_filename.lower().split('.')[-1]
 
         if file_extension not in allowed_extensions:
             raise HTTPException(
@@ -64,19 +125,19 @@ async def upload_document(
                 detail="File is empty"
             )
 
-        # Process document
+        # Process document with sanitized filename
         document_id, chunks_count = rag_pipeline.process_document(
             user_id=current_user.id,
-            filename=file.filename,
+            filename=safe_filename,
             file_content=file_content,
             file_size=file_size
         )
 
-        logger.info(f"Document uploaded by {current_user.username}: {file.filename} ({chunks_count} chunks)")
+        logger.info(f"Document uploaded by {current_user.username}: {safe_filename} ({chunks_count} chunks)")
 
         return DocumentUploadResponse(
             document_id=document_id,
-            filename=file.filename,
+            filename=safe_filename,
             file_size=file_size,
             chunks_created=chunks_count,
             message="Document uploaded and processed successfully"
@@ -98,7 +159,9 @@ async def upload_document(
 
 
 @router.get("", response_model=DocumentListResponse)
+@limiter.limit("30/minute")
 async def list_documents(
+    request: Request,
     current_user: User = Depends(get_current_user),
     rag_pipeline = Depends(get_rag_pipeline)
 ):
@@ -140,7 +203,9 @@ async def list_documents(
 
 
 @router.delete("/{document_id}")
+@limiter.limit("30/minute")
 async def delete_document(
+    request: Request,
     document_id: str,
     current_user: User = Depends(get_current_user),
     rag_pipeline = Depends(get_rag_pipeline)

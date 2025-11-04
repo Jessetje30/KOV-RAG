@@ -12,11 +12,15 @@ from dotenv import load_dotenv
 env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from db import init_db
 from rag_bbl import BBLRAGPipeline
+from middleware import SecurityHeadersMiddleware
 
 # Import routers
 from api import (
@@ -30,6 +34,9 @@ from api import (
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
 # Global RAG pipeline instance
 rag_pipeline = None
@@ -62,6 +69,15 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Configure rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Security headers middleware
+# Set ENFORCE_HTTPS=true in production
+enforce_https = os.getenv("ENFORCE_HTTPS", "false").lower() == "true"
+app.add_middleware(SecurityHeadersMiddleware, enforce_https=enforce_https)
+
 # CORS middleware configuration
 # Parse CORS_ORIGINS from environment (comma-separated list)
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:8501,http://localhost:3000").split(",")
@@ -71,8 +87,16 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Only allow necessary HTTP methods
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "Accept",
+        "Accept-Language",
+        "X-Request-ID"
+    ],  # Only allow necessary headers
+    expose_headers=["X-Request-ID"],
+    max_age=600,  # Cache preflight requests for 10 minutes
 )
 
 # Register routers

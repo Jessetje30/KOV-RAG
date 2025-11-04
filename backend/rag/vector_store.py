@@ -23,10 +23,14 @@ class VectorStore:
     """Wrapper around Qdrant for vector storage and retrieval."""
 
     def __init__(self, host: str = QDRANT_HOST, port: int = QDRANT_PORT):
-        """Initialize Qdrant client."""
-        self.client = QdrantClient(host=host, port=port)
+        """Initialize Qdrant client with timeout."""
+        self.client = QdrantClient(
+            host=host,
+            port=port,
+            timeout=30  # 30 seconds timeout for operations
+        )
         self.embedding_dimension = EMBEDDING_DIMENSION
-        logger.info(f"Initialized VectorStore: {host}:{port}")
+        logger.info(f"Initialized VectorStore: {host}:{port} (timeout: 30s)")
 
     def ensure_collection(self, collection_name: str) -> None:
         """

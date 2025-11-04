@@ -1,8 +1,10 @@
 """Chat session endpoints."""
 import logging
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from models import (
     ChatSessionCreate,
@@ -20,11 +22,16 @@ from dependencies import get_rag_pipeline
 
 logger = logging.getLogger(__name__)
 
+# Rate limiter for chat endpoints
+limiter = Limiter(key_func=get_remote_address)
+
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 
 @router.post("/sessions", response_model=ChatSession)
+@limiter.limit("30/minute")
 async def create_chat_session(
+    request: Request,
     session_data: ChatSessionCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -70,7 +77,9 @@ async def create_chat_session(
 
 
 @router.get("/sessions", response_model=List[ChatSessionSummary])
+@limiter.limit("30/minute")
 async def list_chat_sessions(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -107,7 +116,9 @@ async def list_chat_sessions(
 
 
 @router.get("/sessions/{session_id}", response_model=ChatSession)
+@limiter.limit("30/minute")
 async def get_chat_session(
+    request: Request,
     session_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -175,7 +186,9 @@ async def get_chat_session(
 
 
 @router.delete("/sessions/{session_id}")
+@limiter.limit("30/minute")
 async def delete_chat_session(
+    request: Request,
     session_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -222,7 +235,9 @@ async def delete_chat_session(
 
 
 @router.post("/query", response_model=ChatQueryResponse)
+@limiter.limit("20/minute")
 async def chat_query(
+    request: Request,
     query_data: ChatQueryRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),

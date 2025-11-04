@@ -1,6 +1,8 @@
 """Query endpoint for RAG system."""
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from models import QueryRequest, QueryResponse, SourceChunk, User
 from auth import get_current_user
@@ -8,11 +10,16 @@ from dependencies import get_rag_pipeline
 
 logger = logging.getLogger(__name__)
 
+# Rate limiter for query endpoints
+limiter = Limiter(key_func=get_remote_address)
+
 router = APIRouter(prefix="/api", tags=["query"])
 
 
 @router.post("/query", response_model=QueryResponse)
+@limiter.limit("20/minute")
 async def query_documents(
+    request: Request,
     query_data: QueryRequest,
     current_user: User = Depends(get_current_user),
     rag_pipeline = Depends(get_rag_pipeline)
