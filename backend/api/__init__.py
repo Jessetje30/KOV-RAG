@@ -5,6 +5,7 @@ from .routes import (
     documents_router,
     query_router,
     chat_router,
+    admin_router,
 )
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "documents_router",
     "query_router",
     "chat_router",
+    "admin_router",
 ]

@@ -1,13 +1,28 @@
 """SQLAlchemy database models."""
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, JSON, Boolean, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from passlib.context import CryptContext
+import enum
 
 from db.base import Base
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+class UserRole(str, enum.Enum):
+    """User roles enum."""
+    ADMIN = "admin"
+    USER = "user"
+
+
+class InvitationStatus(str, enum.Enum):
+    """Invitation status enum."""
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    EXPIRED = "expired"
+
 
 # Helper function for timezone-aware UTC datetime
 def utc_now():
@@ -40,14 +55,20 @@ class UserDB(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
-    hashed_password = Column(String(255), nullable=False)
+    hashed_password = Column(String(255), nullable=True)  # Nullable for invited users without password yet
+    role = Column(SQLEnum(UserRole), default=UserRole.USER, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=utc_now)
+    invited_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # Admin who invited this user
 
     # Relationships
     chat_sessions = relationship("ChatSessionDB", back_populates="user", cascade="all, delete-orphan")
+    invitations_sent = relationship("UserInvitationDB", foreign_keys="UserInvitationDB.invited_by", back_populates="inviter")
 
     def verify_password(self, password: str) -> bool:
         """Verify a password against the hashed password."""
+        if not self.hashed_password:
+            return False
         password_truncated = truncate_password_for_bcrypt(password)
         return pwd_context.verify(password_truncated, self.hashed_password)
 
@@ -80,3 +101,22 @@ class ChatMessageDB(Base):
 
     # Relationships
     session = relationship("ChatSessionDB", back_populates="messages")
+
+
+class UserInvitationDB(Base):
+    """SQLAlchemy model for user_invitations table."""
+    __tablename__ = "user_invitations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(100), index=True, nullable=False)
+    token = Column(String(255), unique=True, index=True, nullable=False)  # Secure random token
+    invited_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    status = Column(SQLEnum(InvitationStatus), default=InvitationStatus.PENDING, nullable=False)
+    created_at = Column(DateTime, default=utc_now)
+    expires_at = Column(DateTime, nullable=False)  # Invitation expiry (e.g., 7 days)
+    accepted_at = Column(DateTime, nullable=True)  # When user completed setup
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Created user after acceptance
+
+    # Relationships
+    inviter = relationship("UserDB", foreign_keys=[invited_by], back_populates="invitations_sent")
+    accepted_user = relationship("UserDB", foreign_keys=[user_id])

@@ -21,6 +21,7 @@ from slowapi.errors import RateLimitExceeded
 from db import init_db
 from rag_bbl import BBLRAGPipeline
 from middleware import SecurityHeadersMiddleware
+from admin_bootstrap import ensure_admin_exists
 
 # Import routers
 from api import (
@@ -29,6 +30,7 @@ from api import (
     documents_router,
     query_router,
     chat_router,
+    admin_router,
 )
 
 # Configure logging
@@ -49,6 +51,10 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing database...")
     init_db()
     logger.info("Database initialized successfully")
+
+    # Bootstrap admin user if needed
+    logger.info("Checking admin user...")
+    ensure_admin_exists()
 
     global rag_pipeline
     rag_pipeline = BBLRAGPipeline()  # Use BBL-specific collection
@@ -105,6 +111,7 @@ app.include_router(auth_router)
 app.include_router(documents_router)
 app.include_router(query_router)
 app.include_router(chat_router)
+app.include_router(admin_router)
 
 
 # Run application

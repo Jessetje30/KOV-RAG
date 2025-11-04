@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from models import TokenData, User
 from db import get_db, UserRepository, UserDB
+from db.models import UserRole
 
 # Import centralized configuration
 from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
@@ -109,11 +110,20 @@ async def get_current_user(
     if user_db is None:
         raise credentials_exception
 
+    # Check if user is active
+    if not user_db.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive",
+        )
+
     # Convert to Pydantic model
     user = User(
         id=user_db.id,
         username=user_db.username,
         email=user_db.email,
+        role=user_db.role.value,  # Convert enum to string
+        is_active=user_db.is_active,
         created_at=user_db.created_at
     )
 
@@ -157,6 +167,13 @@ async def get_current_user_db(
     if user_db is None:
         raise credentials_exception
 
+    # Check if user is active
+    if not user_db.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive",
+        )
+
     return user_db
 
 
@@ -172,3 +189,32 @@ def verify_token(token: str) -> bool:
     """
     token_data = decode_access_token(token)
     return token_data is not None
+
+
+async def get_current_admin_user(
+    current_user: UserDB = Depends(get_current_user_db)
+) -> UserDB:
+    """
+    Dependency to get the current authenticated admin user.
+
+    This checks that:
+    1. User is authenticated (via get_current_user_db)
+    2. User is active (checked in get_current_user_db)
+    3. User has ADMIN role
+
+    Args:
+        current_user: Current authenticated user (from get_current_user_db)
+
+    Returns:
+        UserDB: Current authenticated admin user
+
+    Raises:
+        HTTPException: If user is not an admin
+    """
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+        )
+
+    return current_user

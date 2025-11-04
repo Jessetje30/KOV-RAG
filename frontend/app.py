@@ -326,29 +326,6 @@ def login(username: str, password: str) -> bool:
     return False
 
 
-def register(username: str, email: str, password: str) -> bool:
-    """Register new user."""
-    response = api_request(
-        "/api/auth/register",
-        method="POST",
-        data={"username": username, "email": email, "password": password}
-    )
-
-    if response:
-        st.session_state.token = response["access_token"]
-        # Save token to cookie for persistent login
-        cookies['auth_token'] = response["access_token"]
-        cookies.save()
-
-        # Get user info
-        user_info = api_request("/api/auth/me", auth=True)
-        if user_info:
-            st.session_state.user = user_info
-            return True
-
-    return False
-
-
 def logout():
     """Logout user."""
     st.session_state.token = None
@@ -383,58 +360,34 @@ if st.session_state.token and not st.session_state.user:
         cookies.save()
 
 
-# Page: Login/Register
+# Page: Login
 def show_auth_page():
     """Display authentication page."""
     st.markdown('<div class="main-header">🏗️ BBL RAG</div>', unsafe_allow_html=True)
     st.markdown("### Kijk op Veiligheid - Besluit Bouwwerken Leefomgeving")
     st.markdown("*Stel vragen over het BBL en krijg direct antwoord met artikelverwijzingen*")
 
-    tab1, tab2 = st.tabs(["Login", "Register"])
+    st.subheader("Login to Your Account")
 
-    with tab1:
-        st.subheader("Login to Your Account")
-        with st.form("login_form"):
-            username = st.text_input("Username")
-            password = st.text_input("Password", type="password")
-            submit = st.form_submit_button("Login")
+    # Info message about invitation-based access
+    st.info("ℹ️ **Nieuwe gebruikers**: Accounts worden aangemaakt via uitnodiging. Neem contact op met een administrator voor toegang.")
 
-            if submit:
-                if not username or not password:
-                    st.error("Please enter both username and password")
-                else:
-                    with st.spinner("Logging in..."):
-                        if login(username, password):
-                            st.success("Login successful!")
-                            st.session_state.page = 'main'
-                            st.rerun()
-                        else:
-                            st.error("Login failed. Please check your credentials.")
+    with st.form("login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submit = st.form_submit_button("Login")
 
-    with tab2:
-        st.subheader("Create New Account")
-        with st.form("register_form"):
-            new_username = st.text_input("Username", key="reg_username")
-            new_email = st.text_input("Email", key="reg_email")
-            new_password = st.text_input("Password", type="password", key="reg_password")
-            confirm_password = st.text_input("Confirm Password", type="password")
-            submit_reg = st.form_submit_button("Register")
-
-            if submit_reg:
-                if not all([new_username, new_email, new_password, confirm_password]):
-                    st.error("Please fill in all fields")
-                elif new_password != confirm_password:
-                    st.error("Passwords do not match")
-                elif len(new_password) < 8:
-                    st.error("Password must be at least 8 characters long")
-                else:
-                    with st.spinner("Creating account..."):
-                        if register(new_username, new_email, new_password):
-                            st.success("Registration successful!")
-                            st.session_state.page = 'main'
-                            st.rerun()
-                        else:
-                            st.error("Registration failed. Username or email may already exist.")
+        if submit:
+            if not username or not password:
+                st.error("Please enter both username and password")
+            else:
+                with st.spinner("Logging in..."):
+                    if login(username, password):
+                        st.success("Login successful!")
+                        st.session_state.page = 'main'
+                        st.rerun()
+                    else:
+                        st.error("Login failed. Please check your credentials.")
 
 
 # Page: Main Application
@@ -452,12 +405,20 @@ def show_main_page():
         st.markdown(f"### Welkom, {st.session_state.user['username']}!")
         st.markdown(f"**Email:** {st.session_state.user['email']}")
 
+        # Show admin badge
+        if st.session_state.user.get('role') == 'admin':
+            st.markdown("🔑 **Administrator**")
+
         st.markdown("---")
 
-        # Navigation
+        # Navigation - add Admin Panel for admins
+        nav_options = ["BBL Vragen Stellen", "BBL Documenten"]
+        if st.session_state.user.get('role') == 'admin':
+            nav_options.append("👥 Admin Panel")
+
         page = st.radio(
             "Navigation",
-            ["BBL Vragen Stellen", "BBL Documenten"],
+            nav_options,
             label_visibility="collapsed"
         )
 
@@ -477,6 +438,8 @@ def show_main_page():
         show_query_page()
     elif page == "BBL Documenten":
         show_manage_documents_page()
+    elif page == "👥 Admin Panel":
+        show_admin_panel()
 
 
 # Page: Query Documents
@@ -706,6 +669,89 @@ def show_manage_documents_page():
                                 if delete_response:
                                     st.success("Document deleted successfully!")
                                     st.rerun()
+
+                    st.markdown("---")
+
+
+# Page: Admin Panel
+def show_admin_panel():
+    """Display admin panel for user management (admin only)."""
+    st.markdown('<div class="main-header">👥 Admin Panel</div>', unsafe_allow_html=True)
+    st.markdown("*Beheer gebruikers en verstuur uitnodigingen*")
+
+    # Check if user is admin
+    if st.session_state.user.get('role') != 'admin':
+        st.error("⛔ Toegang geweigerd. Deze pagina is alleen toegankelijk voor administrators.")
+        return
+
+    st.markdown("---")
+
+    # Tabs for different admin functions
+    tab1, tab2 = st.tabs(["📧 Gebruiker Uitnodigen", "👤 Gebruikers Beheren"])
+
+    with tab1:
+        st.subheader("Nieuwe Gebruiker Uitnodigen")
+        st.markdown("Stuur een uitnodiging naar een nieuw emailadres. De gebruiker ontvangt een email met een link om hun account aan te maken.")
+
+        with st.form("invite_user_form"):
+            email = st.text_input("Email Adres", placeholder="gebruiker@example.com")
+            submit = st.form_submit_button("📧 Uitnodiging Versturen", use_container_width=True)
+
+            if submit:
+                if not email or '@' not in email:
+                    st.error("Voer een geldig email adres in")
+                else:
+                    with st.spinner("Uitnodiging versturen..."):
+                        response = api_request(
+                            "/api/admin/invite-user",
+                            method="POST",
+                            data={"email": email},
+                            auth=True
+                        )
+
+                        if response:
+                            st.success(f"✅ Uitnodiging verstuurd naar {email}!")
+                            st.info(f"De gebruiker kan hun account aanmaken via de link in de email. De uitnodiging verloopt over 7 dagen.")
+                        else:
+                            st.error("❌ Uitnodiging versturen mislukt. Mogelijk bestaat dit email adres al.")
+
+    with tab2:
+        st.subheader("Gebruikers Overzicht")
+        st.markdown("Bekijk alle geregistreerde gebruikers en hun status.")
+
+        with st.spinner("Gebruikers laden..."):
+            users_response = api_request("/api/admin/users?page=1&page_size=50", auth=True)
+
+        if users_response and 'users' in users_response:
+            users = users_response['users']
+            total = users_response.get('total', 0)
+
+            st.markdown(f"**Totaal gebruikers:** {total}")
+            st.markdown("---")
+
+            if not users:
+                st.info("Nog geen gebruikers geregistreerd.")
+            else:
+                for user in users:
+                    col1, col2, col3 = st.columns([2, 1, 1])
+
+                    with col1:
+                        # User info
+                        status_icon = "✅" if user.get('is_active') else "❌"
+                        role_badge = "🔑 Admin" if user.get('role') == 'admin' else "👤 User"
+                        st.markdown(f"{status_icon} **{user.get('username')}** ({role_badge})")
+                        st.caption(f"Email: {user.get('email')}")
+
+                    with col2:
+                        # Status toggle (simplified - would need full implementation)
+                        if user.get('is_active'):
+                            st.caption("✅ Actief")
+                        else:
+                            st.caption("❌ Inactief")
+
+                    with col3:
+                        # Show ID for reference
+                        st.caption(f"ID: {user.get('id')}")
 
                     st.markdown("---")
 

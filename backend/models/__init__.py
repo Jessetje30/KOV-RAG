@@ -36,6 +36,20 @@ from .query import (
     QueryResponse
 )
 
+# Admin models
+from .admin import (
+    InviteUserRequest,
+    InvitationResponse,
+    InvitationListResponse,
+    UserAdminResponse,
+    UserListResponse,
+    UpdateUserRequest,
+    UpdateUserResponse,
+    ValidateInvitationResponse,
+    SetupAccountRequest,
+    SetupAccountResponse
+)
+
 __all__ = [
     # Auth
     "UserRegister",
@@ -61,4 +75,15 @@ __all__ = [
     "QueryRequest",
     "SourceChunk",
     "QueryResponse",
+    # Admin
+    "InviteUserRequest",
+    "InvitationResponse",
+    "InvitationListResponse",
+    "UserAdminResponse",
+    "UserListResponse",
+    "UpdateUserRequest",
+    "UpdateUserResponse",
+    "ValidateInvitationResponse",
+    "SetupAccountRequest",
+    "SetupAccountResponse",
 ]

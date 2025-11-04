@@ -122,6 +122,8 @@ frontend/.env
 *.db
 *.sqlite
 *.sqlite3
+*.db.backup*
+*.db-journal
 
 # Qdrant storage
 qdrant_storage/
@@ -192,3 +194,6 @@ __marimo__/
 # Security / Admin Tools (local development only, never deploy)
 backend/create_admin.py
 backend/start_backend.sh
+
+# Process ID files
+*.pid
