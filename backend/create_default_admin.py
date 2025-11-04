@@ -27,7 +27,8 @@ env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
 from db.base import SessionLocal, engine, Base
-from db.models import UserDB, UserRole, pwd_context, truncate_password_for_bcrypt
+from db.models import UserDB, UserRole
+from db.crud import UserRepository
 
 # Default admin credentials
 DEFAULT_ADMIN_EMAIL = "admin@kov-rag.nl"
@@ -65,9 +66,8 @@ def create_default_admin():
             else:
                 print(f"  User already has admin role")
         else:
-            # Hash password using the same method as the rest of the application
-            password_truncated = truncate_password_for_bcrypt(DEFAULT_ADMIN_PASSWORD)
-            hashed_password = pwd_context.hash(password_truncated)
+            # Hash password using the EXACT same method as UserRepository
+            hashed_password = UserRepository.hash_password(DEFAULT_ADMIN_PASSWORD)
 
             # Create admin user
             print(f"Creating new admin user: {DEFAULT_ADMIN_EMAIL}")
