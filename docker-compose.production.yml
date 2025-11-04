@@ -1,3 +1,6 @@
+# Production Docker Compose - Simplified without health checks
+# Use this if health checks are causing issues
+
 services:
   # Vector Database
   qdrant:
@@ -13,12 +16,6 @@ services:
     restart: unless-stopped
     networks:
       - rag-network
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:6333/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
 
   # Backend API
   backend:
@@ -29,7 +26,6 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
       - backend_data:/app/data
     environment:
       - QDRANT_HOST=qdrant
@@ -39,17 +35,10 @@ services:
     env_file:
       - .env
     depends_on:
-      qdrant:
-        condition: service_healthy
+      - qdrant
     restart: unless-stopped
     networks:
       - rag-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
   # Frontend UI
   frontend:
@@ -59,24 +48,15 @@ services:
     container_name: rag-frontend
     ports:
       - "8501:8501"
-    volumes:
-      - ./frontend:/app
     environment:
       - BACKEND_URL=http://backend:8000
     env_file:
       - .env
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     restart: unless-stopped
     networks:
       - rag-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
 volumes:
   qdrant_data:
