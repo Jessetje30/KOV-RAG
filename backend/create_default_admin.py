@@ -27,7 +27,18 @@ env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
 from db.base import SessionLocal, engine, Base
-from db.models import UserDB, UserRole, pwd_context, truncate_password_for_bcrypt
+from db.models import UserDB, UserRole
+from passlib.context import CryptContext
+
+# Create password context
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def truncate_password_for_bcrypt(password: str) -> str:
+    """Truncate password to 72 bytes for bcrypt compatibility."""
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        return password_bytes[:72].decode('utf-8', errors='ignore')
+    return password
 
 # Default admin credentials
 DEFAULT_ADMIN_EMAIL = "admin@kov-rag.nl"
