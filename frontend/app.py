@@ -424,8 +424,17 @@ def show_main_page():
 
         st.markdown("---")
 
-        # Info over BBL versie
-        st.info("📚 **BBL Versie**: 2025-07-01\n\n602 artikelen beschikbaar")
+        # Info over BBL versie (dynamisch)
+        documents_response = api_request("/api/documents", auth=True)
+        if documents_response:
+            bbl_docs = [doc for doc in documents_response.get("documents", []) if doc['document_id'].startswith('BBL_')]
+            doc_count = len(bbl_docs)
+            if doc_count > 0:
+                st.info(f"📚 **BBL Versie**: 2025-07-01\n\n{doc_count} artikelen beschikbaar")
+            else:
+                st.warning("⚠️ **Geen BBL documenten**\n\nUpload BBL documenten via het Admin Panel")
+        else:
+            st.warning("⚠️ **Kan documenten niet laden**")
 
         st.markdown("---")
 
@@ -687,7 +696,7 @@ def show_admin_panel():
     st.markdown("---")
 
     # Tabs for different admin functions
-    tab1, tab2 = st.tabs(["📧 Gebruiker Uitnodigen", "👤 Gebruikers Beheren"])
+    tab1, tab2, tab3 = st.tabs(["📧 Gebruiker Uitnodigen", "👤 Gebruikers Beheren", "📤 BBL Uploaden"])
 
     with tab1:
         st.subheader("Nieuwe Gebruiker Uitnodigen")
@@ -754,6 +763,49 @@ def show_admin_panel():
                         st.caption(f"ID: {user.get('id')}")
 
                     st.markdown("---")
+
+    with tab3:
+        st.subheader("BBL Documenten Uploaden")
+        st.markdown("Upload PDF, DOCX of TXT bestanden met BBL artikelen om ze doorzoekbaar te maken.")
+
+        st.markdown('<div class="info-box">📁 Ondersteunde formaten: PDF, DOCX, TXT<br>📏 Maximale bestandsgrootte: 10MB</div>', unsafe_allow_html=True)
+
+        uploaded_file = st.file_uploader(
+            "Kies een bestand",
+            type=['pdf', 'docx', 'txt'],
+            help="Upload een document om toe te voegen aan de kennisbank",
+            key="admin_upload"
+        )
+
+        if uploaded_file is not None:
+            # Display file info
+            st.markdown("#### Bestandsinformatie")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write(f"**Bestandsnaam:** {uploaded_file.name}")
+            with col2:
+                st.write(f"**Grootte:** {uploaded_file.size / 1024:.2f} KB")
+
+            if st.button("📤 Upload en Verwerk", use_container_width=True, key="upload_submit"):
+                with st.spinner("Document uploaden en verwerken..."):
+                    files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+
+                    response = api_request(
+                        "/api/documents/upload",
+                        method="POST",
+                        files=files,
+                        auth=True
+                    )
+
+                    if response:
+                        st.success(f"✅ {response['message']}")
+                        st.markdown(f"""
+                        **Document ID:** {response['document_id']}
+                        **Chunks Aangemaakt:** {response['chunks_created']}
+                        **Bestandsgrootte:** {response['file_size'] / 1024:.2f} KB
+                        """)
+                    else:
+                        st.error("❌ Upload mislukt. Probeer het opnieuw.")
 
 
 # Main App Logic
