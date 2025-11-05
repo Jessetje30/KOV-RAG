@@ -27,11 +27,13 @@ services:
       - "8000:8000"
     volumes:
       - backend_data:/app/data
+      - backend_db:/app
     environment:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
       - BACKEND_HOST=0.0.0.0
       - BACKEND_PORT=8000
+      - DATABASE_URL=sqlite:////app/rag_app.db
     env_file:
       - .env
     depends_on:
@@ -62,6 +64,8 @@ volumes:
   qdrant_data:
     driver: local
   backend_data:
+    driver: local
+  backend_db:
     driver: local
 
 networks:
