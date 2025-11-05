@@ -51,8 +51,17 @@ class UserRepository:
 
     @staticmethod
     def authenticate_user(db: Session, username: str, password: str) -> Optional[UserDB]:
-        """Authenticate a user by username and password."""
+        """
+        Authenticate a user by username/email and password.
+        Accepts both username and email for login.
+        """
+        # Try to find user by username first
         user = UserRepository.get_user_by_username(db, username)
+
+        # If not found, try by email
+        if not user:
+            user = db.query(UserDB).filter(UserDB.email == username).first()
+
         if not user:
             return None
 
