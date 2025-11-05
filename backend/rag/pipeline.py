@@ -122,11 +122,16 @@ class RAGPipeline:
                 )
                 points.append(point)
 
-            # Upload to Qdrant
-            self.vector_store.client.upsert(
-                collection_name=collection_name,
-                points=points
-            )
+            # Upload to Qdrant in batches to avoid timeout
+            logger.info(f"Uploading {len(points)} points to Qdrant in batches...")
+            upsert_batch_size = 100
+            for i in range(0, len(points), upsert_batch_size):
+                batch_points = points[i:i + upsert_batch_size]
+                logger.info(f"Uploading batch {i//upsert_batch_size + 1}/{(len(points) + upsert_batch_size - 1)//upsert_batch_size}")
+                self.vector_store.client.upsert(
+                    collection_name=collection_name,
+                    points=batch_points
+                )
             chunks_created = len(points)
 
         else:
