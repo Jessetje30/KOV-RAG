@@ -31,7 +31,7 @@ if not _openai_key or _openai_key in [
         "Then add it to backend/.env: OPENAI_API_KEY=<your-api-key>"
     )
 OPENAI_API_KEY = _openai_key
-OPENAI_LLM_MODEL = os.getenv("OPENAI_LLM_MODEL", "gpt-5")
+OPENAI_LLM_MODEL = os.getenv("OPENAI_LLM_MODEL", "gpt-4-turbo")
 OPENAI_EMBED_MODEL = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-large")
 
 # ============================================================================
