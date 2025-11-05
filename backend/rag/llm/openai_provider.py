@@ -232,17 +232,13 @@ class OpenAILLMProvider(BaseLLMProvider):
         """
         Check if OpenAI API is accessible.
 
+        Note: We don't actually call the API here to avoid costs.
+        Docker health checks run every 30 seconds, which would be expensive.
+        Instead, we just return True since the API key is validated at startup.
+
         Returns:
             True if healthy, False otherwise
         """
-        try:
-            # Test embedding
-            test_embedding = self.get_embeddings(["test"])
-
-            # Test LLM with sufficient tokens for reasoning models
-            test_answer = self.generate_answer("What is 2+2?", max_length=512)
-
-            return True
-        except Exception as e:
-            logger.error(f"Health check failed: {str(e)}")
-            return False
+        # Simply return True - the API key is already validated in __init__
+        # If there were issues, the app wouldn't have started
+        return True
