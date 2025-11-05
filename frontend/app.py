@@ -38,213 +38,191 @@ cookies = EncryptedCookieManager(
 if not cookies.ready():
     st.stop()
 
-# Custom CSS with proper dark mode support
+# Modern CSS with Tailwind CDN and 2025 styling
 st.markdown("""
+<!-- Google Fonts - Inter (Modern 2025 font) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Tailwind CSS 4.0 CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+tailwind.config = {
+    theme: {
+        extend: {
+            colors: {
+                primary: {
+                    500: '#FF6B35',
+                    600: '#E85A2A',
+                    700: '#CC4620'
+                },
+                zinc: {
+                    50: '#FAFAFA',
+                    100: '#F4F4F5',
+                    600: '#52525B',
+                    700: '#3F3F46',
+                    800: '#27272A',
+                    900: '#18181B'
+                }
+            },
+            fontFamily: {
+                sans: ['Inter', 'system-ui', 'sans-serif']
+            }
+        }
+    }
+}
+</script>
+
 <style>
+    /* Import Inter font */
+    * {
+        font-family: 'Inter', -apple-system, system-ui, sans-serif !important;
+    }
+
+    /* Modern header styling */
     .main-header {
         font-size: 2.5rem;
-        font-weight: bold;
-        margin-bottom: 1rem;
-        color: var(--text-color);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #18181B;
+        letter-spacing: -0.02em;
     }
 
-    /* Light theme boxes */
+    /* Modern card styling with hover effects */
+    .modern-card {
+        background: white;
+        border: 1px solid #E4E4E7;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .modern-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+    }
+
+    /* Success box - modern green */
     .success-box {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        background-color: #d4edda;
-        border: 1px solid #c3e6cb;
-        color: #155724;
+        padding: 1rem 1.25rem;
+        border-radius: 0.75rem;
+        background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+        border: 1px solid #BBF7D0;
+        color: #166534;
         margin: 1rem 0;
+        font-weight: 500;
     }
+
+    /* Error box - modern red */
     .error-box {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        color: #721c24;
+        padding: 1rem 1.25rem;
+        border-radius: 0.75rem;
+        background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+        border: 1px solid #FECACA;
+        color: #991B1B;
         margin: 1rem 0;
+        font-weight: 500;
     }
+
+    /* Info box - modern blue */
     .info-box {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        background-color: #d1ecf1;
-        border: 1px solid #bee5eb;
-        color: #0c5460;
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+        background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+        border: 1px solid #BFDBFE;
+        color: #1E40AF;
         margin: 1rem 0;
+        font-weight: 500;
     }
+
+    /* Source box - modern style with accent */
     .source-box {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        color: #212529;
-        margin: 0.5rem 0;
+        padding: 1.25rem;
+        border-radius: 0.875rem;
+        background: white;
+        border: 1px solid #E4E4E7;
+        border-left: 4px solid #FF6B35;
+        color: #18181B;
+        margin: 1rem 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        transition: all 0.2s;
     }
 
-    /* Dark theme - using Streamlit's data-testid attribute on body */
-    [data-testid="stAppViewContainer"][data-theme="dark"] .success-box,
-    body[data-theme="dark"] .success-box {
-        background-color: #1e4620 !important;
-        border-color: #2d5a2e !important;
-        color: #a3d9a5 !important;
-    }
-    [data-testid="stAppViewContainer"][data-theme="dark"] .error-box,
-    body[data-theme="dark"] .error-box {
-        background-color: #4a1f1f !important;
-        border-color: #6b2c2c !important;
-        color: #f5a3a3 !important;
-    }
-    [data-testid="stAppViewContainer"][data-theme="dark"] .info-box,
-    body[data-theme="dark"] .info-box {
-        background-color: #1a3a42 !important;
-        border-color: #2a4f5a !important;
-        color: #a3d5e6 !important;
-    }
-    [data-testid="stAppViewContainer"][data-theme="dark"] .source-box,
-    body[data-theme="dark"] .source-box {
-        background-color: #000000 !important;
-        border-color: #333333 !important;
-        color: #ffffff !important;
-    }
-    [data-testid="stAppViewContainer"][data-theme="dark"] .main-header,
-    body[data-theme="dark"] .main-header {
-        color: #ffffff !important;
+    .source-box:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        border-left-color: #CC4620;
     }
 
-    /* Additional dark mode support using prefers-color-scheme */
-    @media (prefers-color-scheme: dark) {
-        .stApp[data-theme="dark"] .success-box,
-        .stApp .success-box {
-            background-color: #1e4620 !important;
-            border-color: #2d5a2e !important;
-            color: #a3d9a5 !important;
+    /* Responsive breakpoints */
+    @media (max-width: 640px) {
+        .main-header {
+            font-size: 2rem;
         }
-        .stApp[data-theme="dark"] .error-box,
-        .stApp .error-box {
-            background-color: #4a1f1f !important;
-            border-color: #6b2c2c !important;
-            color: #f5a3a3 !important;
+        .modern-card, .source-box {
+            padding: 1rem;
         }
-        .stApp[data-theme="dark"] .info-box,
-        .stApp .info-box {
-            background-color: #1a3a42 !important;
-            border-color: #2a4f5a !important;
-            color: #a3d5e6 !important;
-        }
-        .stApp[data-theme="dark"] .source-box,
-        .stApp .source-box {
-            background-color: #000000 !important;
-            border-color: #333333 !important;
-            color: #ffffff !important;
-        }
-        .stApp[data-theme="dark"] .main-header,
-        .stApp .main-header {
-            color: #ffffff !important;
+    }
+
+    /* Touch optimization for mobile */
+    @media (hover: none) and (pointer: coarse) {
+        .modern-card:hover, .source-box:hover {
+            transform: none;
         }
     }
 </style>
 
 <script>
-// Detect and apply dark mode
-function applyDarkModeStyles() {
-    const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const stApp = document.querySelector('.stApp');
-    const body = document.body;
-
-    if (stApp) {
-        if (isDark) {
-            stApp.setAttribute('data-theme', 'dark');
-            body.setAttribute('data-theme', 'dark');
-        } else {
-            stApp.setAttribute('data-theme', 'light');
-            body.setAttribute('data-theme', 'light');
-        }
-    }
-}
-
-// Apply dark mode on load
-applyDarkModeStyles();
-
-// Listen for theme changes
-if (window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyDarkModeStyles);
-}
-
-// Fix tab navigation: remove password visibility toggle buttons from tab order
+// Fix tab navigation and enable Enter to submit
 document.addEventListener('DOMContentLoaded', function() {
-    applyDarkModeStyles();
     fixPasswordTabOrder();
     enableEnterToSubmit();
 });
 
-// Also run after a short delay for Streamlit's dynamic rendering
 setTimeout(function() {
-    applyDarkModeStyles();
     fixPasswordTabOrder();
     enableEnterToSubmit();
 }, 1000);
 
-// Run again after longer delay to catch late-loading elements
 setTimeout(function() {
-    applyDarkModeStyles();
     enableEnterToSubmit();
 }, 2000);
 
 function fixPasswordTabOrder() {
-    // Find all password input containers
     const passwordInputs = document.querySelectorAll('input[type="password"]');
-
     passwordInputs.forEach(input => {
-        // Find the parent container
         const container = input.closest('div[data-baseweb="input"]') || input.parentElement;
-
-        // Find all buttons within this container (the visibility toggle)
         const buttons = container.querySelectorAll('button');
-
         buttons.forEach(button => {
-            // Remove from tab order
             button.setAttribute('tabindex', '-1');
         });
     });
-
-    console.log('Password field tab order fixed');
 }
 
 function enableEnterToSubmit() {
-    // Find all textareas in forms
     const textareas = document.querySelectorAll('form textarea');
-
     textareas.forEach(textarea => {
-        // Remove existing listener to avoid duplicates
         textarea.removeEventListener('keydown', handleEnterKey);
-        // Add new listener
         textarea.addEventListener('keydown', handleEnterKey);
     });
-
-    console.log('Enter-to-submit enabled for forms');
 }
 
 function handleEnterKey(event) {
-    // Check if Enter was pressed (without Shift, which creates new line)
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
-
-        // Find the submit button in the same form
         const form = event.target.closest('form');
         if (form) {
             const submitButton = form.querySelector('button[kind="primary"], button[type="submit"]');
             if (submitButton) {
                 submitButton.click();
-                console.log('Form submitted via Enter key');
             }
         }
     }
 }
 
-// Re-run when Streamlit reruns (on interaction)
 const observer = new MutationObserver(function(mutations) {
-    applyDarkModeStyles();
     fixPasswordTabOrder();
     enableEnterToSubmit();
 });
@@ -362,31 +340,70 @@ if st.session_state.token and not st.session_state.user:
 # Page: Login
 def show_auth_page():
     """Display authentication page."""
-    st.markdown('<div class="main-header">BBL RAG</div>', unsafe_allow_html=True)
-    st.markdown("### Kijk op Veiligheid - Besluit Bouwwerken Leefomgeving")
-    st.markdown("*Stel vragen over het BBL en krijg direct antwoord met artikelverwijzingen*")
+    # Modern centered login page
+    st.markdown("""
+        <div style="max-width: 440px; margin: 4rem auto 0 auto; padding: 0 1rem;">
+            <div style="text-align: center; margin-bottom: 2.5rem;">
+                <div style="font-size: 3rem; font-weight: 700; color: #FF6B35; margin-bottom: 0.5rem; letter-spacing: -0.02em;">
+                    BBL RAG
+                </div>
+                <div style="font-size: 1.125rem; font-weight: 600; color: #27272A; margin-bottom: 0.5rem;">
+                    Kijk op Veiligheid
+                </div>
+                <div style="font-size: 0.875rem; color: #52525B; line-height: 1.4;">
+                    Besluit Bouwwerken Leefomgeving
+                </div>
+                <div style="font-size: 0.875rem; color: #71717A; margin-top: 0.75rem; font-style: italic;">
+                    Stel vragen over het BBL en krijg direct antwoord met artikelverwijzingen
+                </div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
-    st.subheader("Login to Your Account")
+    # Login card
+    st.markdown("""
+        <div style="max-width: 440px; margin: 0 auto; padding: 0 1rem;">
+            <div class="modern-card" style="padding: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: #18181B; margin: 0 0 0.5rem 0;">
+                    Inloggen
+                </h2>
+                <p style="font-size: 0.875rem; color: #71717A; margin: 0 0 1.5rem 0;">
+                    Log in met uw account gegevens
+                </p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
     # Info message about invitation-based access
-    st.info("**Nieuwe gebruikers**: Accounts worden aangemaakt via uitnodiging. Neem contact op met een administrator voor toegang.")
+    st.markdown("""
+        <div style="max-width: 440px; margin: 1rem auto; padding: 0 1rem;">
+            <div class="info-box">
+                <strong>Nieuwe gebruikers</strong>: Accounts worden aangemaakt via uitnodiging. Neem contact op met een administrator voor toegang.
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Form container
+    st.markdown('<div style="max-width: 440px; margin: 0 auto; padding: 0 1rem;">', unsafe_allow_html=True)
 
     with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submit = st.form_submit_button("Login")
+        username = st.text_input("Gebruikersnaam", placeholder="Voer uw gebruikersnaam in")
+        password = st.text_input("Wachtwoord", type="password", placeholder="Voer uw wachtwoord in")
+        submit = st.form_submit_button("Inloggen", use_container_width=True)
 
         if submit:
             if not username or not password:
-                st.error("Please enter both username and password")
+                st.markdown('<div class="error-box">Vul zowel gebruikersnaam als wachtwoord in</div>', unsafe_allow_html=True)
             else:
-                with st.spinner("Logging in..."):
+                with st.spinner("Inloggen..."):
                     if login(username, password):
-                        st.success("Login successful!")
+                        st.markdown('<div class="success-box">Login succesvol!</div>', unsafe_allow_html=True)
                         st.session_state.page = 'main'
                         st.rerun()
                     else:
-                        st.error("Login failed. Please check your credentials.")
+                        st.markdown('<div class="error-box">Login mislukt. Controleer uw inloggegevens.</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # Page: Main Application
