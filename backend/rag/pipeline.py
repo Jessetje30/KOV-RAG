@@ -399,6 +399,26 @@ class RAGPipeline:
         
         return list(documents.values())
 
+    def get_total_chunks_count(self, user_id: int) -> int:
+        """
+        Get total count of chunks for a user (fast, doesn't fetch all data).
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            int: Total number of chunks
+        """
+        collection_name = self._get_collection_name(user_id)
+
+        try:
+            count = self.vector_store.count_points(collection_name, user_id)
+            logger.info(f"User {user_id} has {count} total chunks")
+            return count
+        except Exception as e:
+            logger.error(f"Error counting chunks: {str(e)}")
+            return 0
+
     def delete_document(self, user_id: int, document_id: str) -> bool:
         """
         Delete a document and all its chunks.

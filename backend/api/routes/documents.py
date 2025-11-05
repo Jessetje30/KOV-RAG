@@ -202,6 +202,36 @@ async def list_documents(
         )
 
 
+@router.get("/count", response_model=dict)
+@limiter.limit("60/minute")
+async def get_chunks_count(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    rag_pipeline = Depends(get_rag_pipeline)
+):
+    """
+    Get total count of chunks for current user (fast, optimized endpoint).
+
+    Args:
+        current_user: Current authenticated user
+        rag_pipeline: RAG pipeline instance
+
+    Returns:
+        dict: Total chunks count
+    """
+    try:
+        total_chunks = rag_pipeline.get_total_chunks_count(current_user.id)
+
+        return {"total_chunks": total_chunks}
+
+    except Exception as e:
+        logger.error(f"Error counting chunks: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to count chunks"
+        )
+
+
 @router.delete("/{document_id}")
 @limiter.limit("30/minute")
 async def delete_document(

@@ -159,3 +159,24 @@ class VectorStore:
         )
 
         return results
+
+    def count_points(self, collection_name: str, user_id: int) -> int:
+        """
+        Count total points for a user without fetching all data.
+
+        Args:
+            collection_name: Name of the collection
+            user_id: User ID
+
+        Returns:
+            Total count of points
+        """
+        result = self.client.count(
+            collection_name=collection_name,
+            count_filter=Filter(
+                must=[FieldCondition(key="user_id", match=MatchValue(value=user_id))]
+            ),
+            exact=True
+        )
+
+        return result.count
