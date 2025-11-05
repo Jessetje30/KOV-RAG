@@ -89,8 +89,15 @@ class RAGPipeline:
             # Extract texts for embedding
             texts = [chunk['text'] for chunk in bbl_chunks]
 
-            # Get embeddings
-            embeddings = self.llm_provider.get_embeddings(texts)
+            # Get embeddings in batches to avoid timeout
+            logger.info(f"Generating embeddings for {len(texts)} BBL chunks in batches...")
+            batch_size = 50
+            embeddings = []
+            for i in range(0, len(texts), batch_size):
+                batch_texts = texts[i:i + batch_size]
+                logger.info(f"Processing batch {i//batch_size + 1}/{(len(texts) + batch_size - 1)//batch_size}")
+                batch_embeddings = self.llm_provider.get_embeddings(batch_texts)
+                embeddings.extend(batch_embeddings)
 
             # Store with BBL metadata
             from qdrant_client.models import PointStruct
