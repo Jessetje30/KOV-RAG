@@ -14,7 +14,7 @@ def show_sidebar():
     """
     with st.sidebar:
         # BBL Branding
-        st.markdown("## 🏗️ BBL RAG")
+        st.markdown("## BBL RAG")
         st.markdown("**Kijk op Veiligheid**")
         st.caption("Besluit Bouwwerken Leefomgeving")
 
@@ -28,7 +28,7 @@ def show_sidebar():
 
             # Show admin badge
             if user.get("role") == "admin":
-                st.markdown("🔑 **Administrator**")
+                st.markdown("**Administrator**")
 
         st.markdown("---")
 
@@ -55,8 +55,8 @@ def _show_bbl_info():
         doc_count = len(bbl_docs)
 
         if doc_count > 0:
-            st.info(f"📚 **BBL Versie**: 2025-07-01\n\n{doc_count} artikelen beschikbaar")
+            st.info(f"**BBL Versie**: 2025-07-01\n\n{doc_count} artikelen beschikbaar")
         else:
-            st.warning("⚠️ **Geen BBL documenten**\n\nUpload BBL documenten via het Admin Panel")
+            st.warning("**Geen BBL documenten**\n\nUpload BBL documenten via het Admin Panel")
     else:
-        st.warning("⚠️ **Kan documenten niet laden**")
+        st.warning("**Kan documenten niet laden**")

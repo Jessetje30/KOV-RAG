@@ -239,8 +239,8 @@ class OpenAILLMProvider(BaseLLMProvider):
             # Test embedding
             test_embedding = self.get_embeddings(["test"])
 
-            # Test LLM
-            test_answer = self.generate_answer("What is 2+2?", max_length=50)
+            # Test LLM with sufficient tokens for reasoning models
+            test_answer = self.generate_answer("What is 2+2?", max_length=512)
 
             return True
         except Exception as e:

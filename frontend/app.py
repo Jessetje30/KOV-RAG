@@ -8,7 +8,6 @@ import streamlit as st
 # Page configuration - MUST BE ABSOLUTE FIRST STREAMLIT COMMAND
 st.set_page_config(
     page_title="BBL RAG - Kijk op Veiligheid",
-    page_icon="🏗️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -363,14 +362,14 @@ if st.session_state.token and not st.session_state.user:
 # Page: Login
 def show_auth_page():
     """Display authentication page."""
-    st.markdown('<div class="main-header">🏗️ BBL RAG</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">BBL RAG</div>', unsafe_allow_html=True)
     st.markdown("### Kijk op Veiligheid - Besluit Bouwwerken Leefomgeving")
     st.markdown("*Stel vragen over het BBL en krijg direct antwoord met artikelverwijzingen*")
 
     st.subheader("Login to Your Account")
 
     # Info message about invitation-based access
-    st.info("ℹ️ **Nieuwe gebruikers**: Accounts worden aangemaakt via uitnodiging. Neem contact op met een administrator voor toegang.")
+    st.info("**Nieuwe gebruikers**: Accounts worden aangemaakt via uitnodiging. Neem contact op met een administrator voor toegang.")
 
     with st.form("login_form"):
         username = st.text_input("Username")
@@ -396,7 +395,7 @@ def show_main_page():
     # Sidebar
     with st.sidebar:
         # BBL Branding
-        st.markdown("## 🏗️ BBL RAG")
+        st.markdown("## BBL RAG")
         st.markdown("**Kijk op Veiligheid**")
         st.caption("Besluit Bouwwerken Leefomgeving")
 
@@ -407,14 +406,14 @@ def show_main_page():
 
         # Show admin badge
         if st.session_state.user.get('role') == 'admin':
-            st.markdown("🔑 **Administrator**")
+            st.markdown("**Administrator**")
 
         st.markdown("---")
 
         # Navigation - add Admin Panel for admins
         nav_options = ["BBL Vragen Stellen", "BBL Documenten"]
         if st.session_state.user.get('role') == 'admin':
-            nav_options.append("👥 Admin Panel")
+            nav_options.append("Admin Panel")
 
         page = st.radio(
             "Navigation",
@@ -430,11 +429,11 @@ def show_main_page():
             bbl_docs = [doc for doc in documents_response.get("documents", []) if doc['document_id'].startswith('BBL_')]
             doc_count = len(bbl_docs)
             if doc_count > 0:
-                st.info(f"📚 **BBL Versie**: 2025-07-01\n\n{doc_count} artikelen beschikbaar")
+                st.info(f"**BBL Versie**: 2025-07-01\n\n{doc_count} artikelen beschikbaar")
             else:
-                st.warning("⚠️ **Geen BBL documenten**\n\nUpload BBL documenten via het Admin Panel")
+                st.warning("**Geen BBL documenten**\n\nUpload BBL documenten via het Admin Panel")
         else:
-            st.warning("⚠️ **Kan documenten niet laden**")
+            st.warning("**Kan documenten niet laden**")
 
         st.markdown("---")
 
@@ -447,14 +446,14 @@ def show_main_page():
         show_query_page()
     elif page == "BBL Documenten":
         show_manage_documents_page()
-    elif page == "👥 Admin Panel":
+    elif page == "Admin Panel":
         show_admin_panel()
 
 
 # Page: Query Documents
 def show_query_page():
     """Display document query interface."""
-    st.markdown('<div class="main-header">🏗️ Stel BBL Vragen</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">Stel BBL Vragen</div>', unsafe_allow_html=True)
     st.markdown("*Stel vragen over het Besluit Bouwwerken Leefomgeving (BBL versie 2025-07-01)*")
 
     # Check if user has any documents
@@ -462,16 +461,16 @@ def show_query_page():
     has_documents = documents_response and documents_response.get("total_count", 0) > 0
 
     if not has_documents:
-        st.warning("⚠️ Geen BBL documenten beschikbaar.")
+        st.warning("Geen BBL documenten beschikbaar.")
         st.info("Het BBL moet worden geladen door een administrator. Neem contact op met de systeembeheerder.")
         return
 
     # Model information box
     st.markdown("""
     <div class="info-box">
-        <strong>🤖 Model:</strong> OpenAI GPT-5 (State-of-the-art reasoning model)<br>
-        <strong>📊 Embeddings:</strong> text-embedding-3-large (3072 dimensies)<br>
-        <strong>📚 Database:</strong> 602 BBL artikelen (versie 2025-07-01)
+        <strong>Model:</strong> OpenAI GPT-4-turbo<br>
+        <strong>Embeddings:</strong> text-embedding-3-large (3072 dimensies)<br>
+        <strong>Database:</strong> 602 BBL artikelen (versie 2025-07-01)
     </div>
     """, unsafe_allow_html=True)
 
@@ -505,7 +504,7 @@ def show_query_page():
     )
 
     # Submit button
-    submit = st.button("🔍 Zoek in BBL", use_container_width=True)
+    submit = st.button("Zoek in BBL", use_container_width=True)
 
     if submit:
         if not query.strip():
@@ -533,12 +532,12 @@ def show_query_page():
         response = st.session_state.query_response
 
         # Display metadata
-        st.caption(f"⏱️ Verwerkingstijd: {response['processing_time_seconds']:.2f} seconden")
+        st.caption(f"Verwerkingstijd: {response['processing_time_seconds']:.2f} seconden")
 
         # Only display sources if there are any (relevance >= 0.4)
         if response["sources"]:
             # Display sources
-            st.markdown("### 📚 Gevonden BBL Artikelen")
+            st.markdown("### Gevonden BBL Artikelen")
 
             # Display sources with AI-generated summary and expandable full text
             for idx, source in enumerate(response["sources"], 1):
@@ -560,7 +559,7 @@ def show_query_page():
                     else:
                         title = f"{idx}. BBL Artikel"
 
-                st.markdown(f"#### 📄 {title}")
+                st.markdown(f"#### {title}")
 
                 # Get AI-generated summary or fallback to longer truncation
                 summary = source.get("summary")
@@ -572,10 +571,10 @@ def show_query_page():
 
                 # Show AI-generated summary in a styled box (HTML escaped for XSS protection)
                 summary_escaped = html.escape(summary)
-                st.markdown(f'<div class="source-box"><strong>🤖 AI Samenvatting (GPT-4-turbo):</strong><br>{summary_escaped}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="source-box"><strong>AI Samenvatting (GPT-4-turbo):</strong><br>{summary_escaped}</div>', unsafe_allow_html=True)
 
                 # Full text in expander
-                with st.expander("📖 Lees volledige artikel"):
+                with st.expander("Lees volledige artikel"):
                     st.markdown(f"**Document:** {source['filename']}")
                     st.markdown(f"**Chunk:** {source['chunk_index']}")
                     st.markdown("---")
@@ -630,7 +629,7 @@ def show_upload_page():
 # Page: Manage Documents
 def show_manage_documents_page():
     """Display document management interface."""
-    st.markdown('<div class="main-header">📚 BBL Documenten</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">BBL Documenten</div>', unsafe_allow_html=True)
     st.markdown("*Overzicht van beschikbare BBL artikelen*")
 
     # Refresh button
@@ -651,7 +650,7 @@ def show_manage_documents_page():
         st.markdown(f"### BBL Artikelen ({total_count})")
 
         if total_count == 0:
-            st.warning("⚠️ Geen BBL documenten gevonden.")
+            st.warning("Geen BBL documenten gevonden.")
             st.info("Het BBL moet worden geladen door een administrator.\n\nNeem contact op met de systeembeheerder.")
         else:
             # Display only BBL documents
@@ -685,18 +684,18 @@ def show_manage_documents_page():
 # Page: Admin Panel
 def show_admin_panel():
     """Display admin panel for user management (admin only)."""
-    st.markdown('<div class="main-header">👥 Admin Panel</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">Admin Panel</div>', unsafe_allow_html=True)
     st.markdown("*Beheer gebruikers en verstuur uitnodigingen*")
 
     # Check if user is admin
     if st.session_state.user.get('role') != 'admin':
-        st.error("⛔ Toegang geweigerd. Deze pagina is alleen toegankelijk voor administrators.")
+        st.error("Toegang geweigerd. Deze pagina is alleen toegankelijk voor administrators.")
         return
 
     st.markdown("---")
 
     # Tabs for different admin functions
-    tab1, tab2, tab3 = st.tabs(["📧 Gebruiker Uitnodigen", "👤 Gebruikers Beheren", "📤 BBL Uploaden"])
+    tab1, tab2, tab3 = st.tabs(["Gebruiker Uitnodigen", "Gebruikers Beheren", "BBL Uploaden"])
 
     with tab1:
         st.subheader("Nieuwe Gebruiker Uitnodigen")
@@ -704,7 +703,7 @@ def show_admin_panel():
 
         with st.form("invite_user_form"):
             email = st.text_input("Email Adres", placeholder="gebruiker@example.com")
-            submit = st.form_submit_button("📧 Uitnodiging Versturen", use_container_width=True)
+            submit = st.form_submit_button("Uitnodiging Versturen", use_container_width=True)
 
             if submit:
                 if not email or '@' not in email:
@@ -719,10 +718,10 @@ def show_admin_panel():
                         )
 
                         if response:
-                            st.success(f"✅ Uitnodiging verstuurd naar {email}!")
+                            st.success(f"Uitnodiging verstuurd naar {email}!")
                             st.info(f"De gebruiker kan hun account aanmaken via de link in de email. De uitnodiging verloopt over 7 dagen.")
                         else:
-                            st.error("❌ Uitnodiging versturen mislukt. Mogelijk bestaat dit email adres al.")
+                            st.error("Uitnodiging versturen mislukt. Mogelijk bestaat dit email adres al.")
 
     with tab2:
         st.subheader("Gebruikers Overzicht")
@@ -746,17 +745,17 @@ def show_admin_panel():
 
                     with col1:
                         # User info
-                        status_icon = "✅" if user.get('is_active') else "❌"
-                        role_badge = "🔑 Admin" if user.get('role') == 'admin' else "👤 User"
+                        status_icon = "[Actief]" if user.get('is_active') else "[Inactief]"
+                        role_badge = "Admin" if user.get('role') == 'admin' else "User"
                         st.markdown(f"{status_icon} **{user.get('username')}** ({role_badge})")
                         st.caption(f"Email: {user.get('email')}")
 
                     with col2:
                         # Status toggle (simplified - would need full implementation)
                         if user.get('is_active'):
-                            st.caption("✅ Actief")
+                            st.caption("Actief")
                         else:
-                            st.caption("❌ Inactief")
+                            st.caption("Inactief")
 
                     with col3:
                         # Show ID for reference
@@ -784,7 +783,7 @@ def show_admin_panel():
             with col2:
                 st.write(f"**Grootte:** {uploaded_file.size / 1024:.2f} KB")
 
-            if st.button("📤 Upload en Verwerk", use_container_width=True, key="upload_submit"):
+            if st.button("Upload en Verwerk", use_container_width=True, key="upload_submit"):
                 with st.spinner("Document uploaden en verwerken..."):
                     files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
 
@@ -796,14 +795,14 @@ def show_admin_panel():
                     )
 
                     if response:
-                        st.success(f"✅ {response['message']}")
+                        st.success(f"{response['message']}")
                         st.markdown(f"""
                         **Document ID:** {response['document_id']}
                         **Chunks Aangemaakt:** {response['chunks_created']}
                         **Bestandsgrootte:** {response['file_size'] / 1024:.2f} KB
                         """)
                     else:
-                        st.error("❌ Upload mislukt. Probeer het opnieuw.")
+                        st.error("Upload mislukt. Probeer het opnieuw.")
 
 
 # Main App Logic
