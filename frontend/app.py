@@ -768,12 +768,12 @@ def show_admin_panel():
         st.subheader("BBL Documenten Uploaden")
         st.markdown("Upload PDF, DOCX of TXT bestanden met BBL artikelen om ze doorzoekbaar te maken.")
 
-        st.markdown('<div class="info-box">📁 Ondersteunde formaten: PDF, DOCX, TXT<br>📏 Maximale bestandsgrootte: 10MB</div>', unsafe_allow_html=True)
+        st.markdown('<div class="info-box">📁 Ondersteunde formaten: PDF, DOCX, TXT, XML (BBL)<br>📏 Maximale bestandsgrootte: 10MB</div>', unsafe_allow_html=True)
 
         uploaded_file = st.file_uploader(
             "Kies een bestand",
-            type=['pdf', 'docx', 'txt'],
-            help="Upload een document om toe te voegen aan de kennisbank",
+            type=['pdf', 'docx', 'txt', 'xml'],
+            help="Upload een document om toe te voegen aan de kennisbank (XML voor BBL documenten)",
             key="admin_upload"
         )
 

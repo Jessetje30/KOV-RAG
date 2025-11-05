@@ -71,35 +71,88 @@ class RAGPipeline:
         # Ensure collection exists
         self.vector_store.ensure_collection(collection_name)
         
-        # Generate document ID
-        document_id = str(uuid.uuid4())
-        
-        # Extract text
-        text = self.document_processor.extract_text(file_content, filename)
-        
-        # Chunk text
-        chunks = self.text_chunker.chunk_text(text)
-        
-        if not chunks:
-            raise ValueError("No text could be extracted from the document")
-        
-        # Get embeddings
-        embeddings = self.llm_provider.get_embeddings(chunks)
-        
-        # Store in vector database
-        metadata = {
-            "user_id": user_id,
-            "document_id": document_id,
-            "filename": filename,
-            "file_size": file_size
-        }
-        
-        chunks_created = self.vector_store.add_points(
-            collection_name=collection_name,
-            texts=chunks,
-            embeddings=embeddings,
-            metadata=metadata
-        )
+        # Check if XML file (BBL)
+        is_xml = filename.lower().endswith('.xml')
+
+        if is_xml:
+            # XML files: use BBL-specific processing that returns structured chunks
+            bbl_chunks = self.document_processor.extract_text(file_content, filename)
+
+            if not bbl_chunks or not isinstance(bbl_chunks, list):
+                raise ValueError("No chunks could be extracted from BBL XML")
+
+            # Generate document ID from BBL metadata
+            # Extract version from BBL chunks metadata
+            version_date = bbl_chunks[0]['metadata'].get('version_date', '2025-07-01')
+            document_id = f"BBL_{version_date}"
+
+            # Extract texts for embedding
+            texts = [chunk['text'] for chunk in bbl_chunks]
+
+            # Get embeddings
+            embeddings = self.llm_provider.get_embeddings(texts)
+
+            # Store with BBL metadata
+            from qdrant_client.models import PointStruct
+            from datetime import datetime, timezone
+            points = []
+            for idx, (chunk, embedding) in enumerate(zip(bbl_chunks, embeddings)):
+                point = PointStruct(
+                    id=str(uuid.uuid4()),
+                    vector=embedding,
+                    payload={
+                        # Standard RAG fields
+                        "document_id": document_id,
+                        "user_id": user_id,
+                        "filename": filename,
+                        "chunk_index": idx,
+                        "text": chunk['text'],
+                        "upload_date": datetime.now(timezone.utc).isoformat(),
+                        "file_size": file_size,
+                        # BBL-specific metadata
+                        **chunk['metadata']
+                    }
+                )
+                points.append(point)
+
+            # Upload to Qdrant
+            self.vector_store.client.upsert(
+                collection_name=collection_name,
+                points=points
+            )
+            chunks_created = len(points)
+
+        else:
+            # Non-XML files: use standard text processing
+            # Generate document ID
+            document_id = str(uuid.uuid4())
+
+            # Extract text
+            text = self.document_processor.extract_text(file_content, filename)
+
+            # Chunk text
+            chunks = self.text_chunker.chunk_text(text)
+
+            if not chunks:
+                raise ValueError("No text could be extracted from the document")
+
+            # Get embeddings
+            embeddings = self.llm_provider.get_embeddings(chunks)
+
+            # Store in vector database
+            metadata = {
+                "user_id": user_id,
+                "document_id": document_id,
+                "filename": filename,
+                "file_size": file_size
+            }
+
+            chunks_created = self.vector_store.add_points(
+                collection_name=collection_name,
+                texts=chunks,
+                embeddings=embeddings,
+                metadata=metadata
+            )
         
         logger.info(f"Processed document {document_id}: {chunks_created} chunks created")
         return document_id, chunks_created

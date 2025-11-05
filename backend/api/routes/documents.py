@@ -99,7 +99,7 @@ async def upload_document(
             )
 
         # Validate file extension
-        allowed_extensions = ['pdf', 'docx', 'txt']
+        allowed_extensions = ['pdf', 'docx', 'txt', 'xml']
         file_extension = safe_filename.lower().split('.')[-1]
 
         if file_extension not in allowed_extensions:
