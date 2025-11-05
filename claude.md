@@ -19,7 +19,7 @@ Een GDPR-compliant RAG (Retrieval-Augmented Generation) applicatie voor het door
 ### Architectuur & Design
 - [Project Architectuur](./.claude/docs/architecture.md) - Systeemoverzicht, componenten en data flows
 - [Backend Structuur](./.claude/docs/backend-structure.md) - API routes, pipeline, en module organisatie
-- [Database Schema](./.claude/docs/database.md) - User management, document tracking
+- [📊 **Complete Code Structure Analysis**](./.claude/docs/code-structure-analysis.md) - **Uitgebreide codebase analyse met refactoring roadmap**
 
 ### Features & Functionaliteit
 - [RAG Pipeline](./.claude/docs/rag-pipeline.md) - Document processing, chunking, embeddings, en query flows
