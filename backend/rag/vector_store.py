@@ -27,10 +27,10 @@ class VectorStore:
         self.client = QdrantClient(
             host=host,
             port=port,
-            timeout=30  # 30 seconds timeout for operations
+            timeout=120  # 120 seconds timeout for large batch operations
         )
         self.embedding_dimension = EMBEDDING_DIMENSION
-        logger.info(f"Initialized VectorStore: {host}:{port} (timeout: 30s)")
+        logger.info(f"Initialized VectorStore: {host}:{port} (timeout: 120s)")
 
     def ensure_collection(self, collection_name: str) -> None:
         """
