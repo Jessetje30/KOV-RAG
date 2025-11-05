@@ -4,10 +4,11 @@ from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from passlib.context import CryptContext
 import enum
+import bcrypt
 
 from db.base import Base
 
-# Password hashing context
+# Password hashing context (kept for backwards compatibility with hash creation)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -66,11 +67,27 @@ class UserDB(Base):
     invitations_sent = relationship("UserInvitationDB", foreign_keys="UserInvitationDB.invited_by", back_populates="inviter")
 
     def verify_password(self, password: str) -> bool:
-        """Verify a password against the hashed password."""
+        """
+        Verify a password against the hashed password.
+        Uses bcrypt directly to avoid passlib/bcrypt 5.0.0 compatibility issues.
+        """
         if not self.hashed_password:
             return False
-        password_truncated = truncate_password_for_bcrypt(password)
-        return pwd_context.verify(password_truncated, self.hashed_password)
+
+        # Truncate password to 72 bytes (bcrypt limitation)
+        password_bytes = password.encode('utf-8')
+        if len(password_bytes) > 72:
+            password_bytes = password_bytes[:72]
+
+        # Get hash as bytes
+        hash_bytes = self.hashed_password.encode('utf-8')
+
+        # Use bcrypt directly for verification
+        try:
+            return bcrypt.checkpw(password_bytes, hash_bytes)
+        except Exception:
+            # Fallback: hash might not be a valid bcrypt hash
+            return False
 
 
 class ChatSessionDB(Base):
