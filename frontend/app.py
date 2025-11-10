@@ -14,7 +14,6 @@ st.set_page_config(
 
 # Now import other modules (some may use Streamlit internally)
 import requests
-import html
 from datetime import datetime
 from typing import Optional, Dict, Any
 from streamlit_cookies_manager import EncryptedCookieManager
@@ -111,38 +110,6 @@ st.markdown("""
     body[data-theme="dark"] .main-header {
         color: #ffffff !important;
     }
-
-    /* Additional dark mode support using prefers-color-scheme */
-    @media (prefers-color-scheme: dark) {
-        .stApp[data-theme="dark"] .success-box,
-        .stApp .success-box {
-            background-color: #1e4620 !important;
-            border-color: #2d5a2e !important;
-            color: #a3d9a5 !important;
-        }
-        .stApp[data-theme="dark"] .error-box,
-        .stApp .error-box {
-            background-color: #4a1f1f !important;
-            border-color: #6b2c2c !important;
-            color: #f5a3a3 !important;
-        }
-        .stApp[data-theme="dark"] .info-box,
-        .stApp .info-box {
-            background-color: #1a3a42 !important;
-            border-color: #2a4f5a !important;
-            color: #a3d5e6 !important;
-        }
-        .stApp[data-theme="dark"] .source-box,
-        .stApp .source-box {
-            background-color: #000000 !important;
-            border-color: #333333 !important;
-            color: #ffffff !important;
-        }
-        .stApp[data-theme="dark"] .main-header,
-        .stApp .main-header {
-            color: #ffffff !important;
-        }
-    }
 </style>
 
 <script>
@@ -207,8 +174,6 @@ function fixPasswordTabOrder() {
             button.setAttribute('tabindex', '-1');
         });
     });
-
-    console.log('Password field tab order fixed');
 }
 
 function enableEnterToSubmit() {
@@ -221,8 +186,6 @@ function enableEnterToSubmit() {
         // Add new listener
         textarea.addEventListener('keydown', handleEnterKey);
     });
-
-    console.log('Enter-to-submit enabled for forms');
 }
 
 function handleEnterKey(event) {
@@ -236,7 +199,6 @@ function handleEnterKey(event) {
             const submitButton = form.querySelector('button[kind="primary"], button[type="submit"]');
             if (submitButton) {
                 submitButton.click();
-                console.log('Form submitted via Enter key');
             }
         }
     }
@@ -423,13 +385,13 @@ def show_main_page():
 
         st.markdown("---")
 
-        # Info over BBL versie (dynamisch)
+        # Info over BBL documenten (dynamisch)
         documents_response = api_request("/api/documents", auth=True)
         if documents_response:
             bbl_docs = [doc for doc in documents_response.get("documents", []) if doc['document_id'].startswith('BBL_')]
             doc_count = len(bbl_docs)
             if doc_count > 0:
-                st.info(f"**BBL Versie**: 2025-07-01\n\n{doc_count} artikelen beschikbaar")
+                st.info(f"**BBL Database**\n\n{doc_count} artikelen beschikbaar")
             else:
                 st.warning("**Geen BBL documenten**\n\nUpload BBL documenten via het Admin Panel")
         else:
@@ -454,7 +416,7 @@ def show_main_page():
 def show_query_page():
     """Display document query interface."""
     st.markdown('<div class="main-header">Stel BBL Vragen</div>', unsafe_allow_html=True)
-    st.markdown("*Stel vragen over het Besluit Bouwwerken Leefomgeving (BBL versie 2025-07-01)*")
+    st.markdown("*Stel vragen over het Besluit Bouwwerken Leefomgeving*")
 
     # Check if user has any documents
     documents_response = api_request("/api/documents", auth=True)
@@ -465,12 +427,16 @@ def show_query_page():
         st.info("Het BBL moet worden geladen door een administrator. Neem contact op met de systeembeheerder.")
         return
 
+    # Get BBL document count
+    bbl_docs = [doc for doc in documents_response.get("documents", []) if doc['document_id'].startswith('BBL_')]
+    bbl_count = len(bbl_docs)
+
     # Model information box
-    st.markdown("""
+    st.markdown(f"""
     <div class="info-box">
         <strong>Model:</strong> OpenAI GPT-4-turbo<br>
         <strong>Embeddings:</strong> text-embedding-3-large (3072 dimensies)<br>
-        <strong>Database:</strong> 602 BBL artikelen (versie 2025-07-01)
+        <strong>Database:</strong> {bbl_count} BBL artikelen beschikbaar
     </div>
     """, unsafe_allow_html=True)
 
@@ -569,9 +535,8 @@ def show_query_page():
 
                 full_text = source["text"]
 
-                # Show AI-generated summary in a styled box (HTML escaped for XSS protection)
-                summary_escaped = html.escape(summary)
-                st.markdown(f'<div class="source-box"><strong>AI Samenvatting (GPT-4-turbo):</strong><br>{summary_escaped}</div>', unsafe_allow_html=True)
+                # Show AI-generated summary in a styled box
+                st.markdown(f'<div class="source-box"><strong>AI Samenvatting (GPT-4-turbo):</strong><br>{summary}</div>', unsafe_allow_html=True)
 
                 # Full text in expander
                 with st.expander("Lees volledige artikel"):
@@ -581,49 +546,6 @@ def show_query_page():
                     st.markdown(full_text)
 
                 st.markdown("")  # Add spacing between sources
-
-
-# Page: Upload Documents
-def show_upload_page():
-    """Display document upload interface."""
-    st.markdown('<div class="main-header">Upload Documents</div>', unsafe_allow_html=True)
-    st.markdown("Upload PDF, DOCX, or TXT files to make them searchable.")
-
-    st.markdown('<div class="info-box">Supported formats: PDF, DOCX, TXT<br>Maximum file size: 10MB</div>', unsafe_allow_html=True)
-
-    uploaded_file = st.file_uploader(
-        "Choose a file",
-        type=['pdf', 'docx', 'txt'],
-        help="Upload a document to add to your knowledge base"
-    )
-
-    if uploaded_file is not None:
-        # Display file info
-        st.markdown("#### File Information")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write(f"**Filename:** {uploaded_file.name}")
-        with col2:
-            st.write(f"**Size:** {uploaded_file.size / 1024:.2f} KB")
-
-        if st.button("Upload and Process", use_container_width=True):
-            with st.spinner("Uploading and processing document..."):
-                files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
-
-                response = api_request(
-                    "/api/documents/upload",
-                    method="POST",
-                    files=files,
-                    auth=True
-                )
-
-                if response:
-                    st.success(response["message"])
-                    st.markdown(f"""
-                    **Document ID:** {response['document_id']}
-                    **Chunks Created:** {response['chunks_created']}
-                    **File Size:** {response['file_size'] / 1024:.2f} KB
-                    """)
 
 
 # Page: Manage Documents
