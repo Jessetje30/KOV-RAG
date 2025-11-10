@@ -48,6 +48,28 @@ tailwind.config = {
         font-family: 'Inter', -apple-system, system-ui, sans-serif !important;
     }
 
+    /* Flexbox utility classes */
+    .jcc {
+        display: flex;
+        justify-content: center;
+    }
+
+    .acc {
+        display: flex;
+        align-items: center;
+    }
+
+    .flex-center {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .flex-col {
+        display: flex;
+        flex-direction: column;
+    }
+
     /* Remove default Streamlit padding/margins */
     .block-container {
         padding-top: 2rem !important;
@@ -254,9 +276,15 @@ tailwind.config = {
         height: 2.5rem !important;
     }
 
-    /* Compact form spacing */
+    /* Compact form spacing - remove border */
     .stForm {
         padding: 0 !important;
+        border: none !important;
+    }
+
+    /* Remove form container border */
+    [data-testid="stForm"] {
+        border: none !important;
     }
 
     /* Remove button outline on focus */
