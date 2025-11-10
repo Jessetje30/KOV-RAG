@@ -48,6 +48,44 @@ tailwind.config = {
         font-family: 'Inter', -apple-system, system-ui, sans-serif !important;
     }
 
+    /* Remove default Streamlit padding/margins */
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+        padding-left: 3rem !important;
+        padding-right: 3rem !important;
+        max-width: 100% !important;
+    }
+
+    /* Hide cookie manager iframe */
+    iframe[title*="cookie"] {
+        display: none !important;
+        height: 0 !important;
+        width: 0 !important;
+    }
+
+    /* Compact Streamlit elements */
+    .element-container {
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Remove excessive vertical spacing */
+    .stMarkdown {
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Compact headings */
+    h1, h2, h3 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Compact info/error/success boxes */
+    .stAlert {
+        padding: 0.75rem 1rem !important;
+        margin: 0.5rem 0 !important;
+    }
+
     /* Modern header styling */
     .main-header {
         font-size: 2.5rem;
@@ -187,6 +225,27 @@ tailwind.config = {
         font-weight: 400 !important;
         padding: 0.5rem 1rem !important;
         transition: all 0.15s !important;
+        height: auto !important;
+        min-height: 2.5rem !important;
+    }
+
+    /* Form submit button - compact */
+    .stFormSubmitButton button {
+        height: 2.5rem !important;
+        padding: 0.5rem 1.5rem !important;
+        font-size: 0.875rem !important;
+    }
+
+    /* Compact text inputs */
+    input[type="text"], input[type="password"] {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.875rem !important;
+        height: 2.5rem !important;
+    }
+
+    /* Compact form spacing */
+    .stForm {
+        padding: 0 !important;
     }
 
     /* Remove button outline on focus */

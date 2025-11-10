@@ -12,28 +12,48 @@ def show_auth_page(cookies):
     Args:
         cookies: Cookie manager instance
     """
-    st.markdown('<div class="main-header">BBL RAG</div>', unsafe_allow_html=True)
-    st.markdown("### Kijk op Veiligheid - Besluit Bouwwerken Leefomgeving")
-    st.markdown("*Stel vragen over het BBL en krijg direct antwoord met artikelverwijzingen*")
+    # Compact centered login
+    st.markdown("""
+        <div style="max-width: 400px; margin: 2rem auto; text-align: center;">
+            <div style="font-size: 2rem; font-weight: 700; color: #FF6B35; margin-bottom: 0.5rem;">
+                BBL RAG
+            </div>
+            <div style="font-size: 1rem; font-weight: 600; color: #3F3F46; margin-bottom: 0.25rem;">
+                Kijk op Veiligheid
+            </div>
+            <div style="font-size: 0.875rem; color: #71717A; margin-bottom: 2rem;">
+                Besluit Bouwwerken Leefomgeving
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
-    st.subheader("Login to Your Account")
+    # Compact form container
+    col1, col2, col3 = st.columns([1, 2, 1])
 
-    # Info message about invitation-based access
-    st.info("**Nieuwe gebruikers**: Accounts worden aangemaakt via uitnodiging. Neem contact op met een administrator voor toegang.")
+    with col2:
+        st.markdown('<div style="margin-bottom: 1rem;"><strong>Inloggen</strong></div>', unsafe_allow_html=True)
 
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submit = st.form_submit_button("Login")
+        with st.form("login_form"):
+            username = st.text_input("Gebruikersnaam", label_visibility="collapsed", placeholder="Gebruikersnaam")
+            password = st.text_input("Wachtwoord", type="password", label_visibility="collapsed", placeholder="Wachtwoord")
+            submit = st.form_submit_button("Inloggen", use_container_width=True)
 
-        if submit:
-            if not username or not password:
-                st.error("Please enter both username and password")
-            else:
-                with st.spinner("Logging in..."):
-                    if login(username, password, cookies):
-                        st.success("Login successful!")
-                        st.session_state.page = 'main'
-                        st.rerun()
-                    else:
-                        st.error("Login failed. Please check your credentials.")
+            if submit:
+                if not username or not password:
+                    st.error("Vul beide velden in")
+                else:
+                    with st.spinner("Inloggen..."):
+                        if login(username, password, cookies):
+                            st.success("Login succesvol!")
+                            st.session_state.page = 'main'
+                            st.rerun()
+                        else:
+                            st.error("Login mislukt. Controleer je gegevens.")
+
+        # Compact info message
+        st.markdown("""
+            <div style="font-size: 0.75rem; color: #71717A; margin-top: 1rem; text-align: center;">
+                <strong>Nieuwe gebruikers?</strong><br>
+                Neem contact op met een administrator.
+            </div>
+        """, unsafe_allow_html=True)
