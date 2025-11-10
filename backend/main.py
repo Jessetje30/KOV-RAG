@@ -21,6 +21,7 @@ from slowapi.errors import RateLimitExceeded
 from db import init_db
 from rag_bbl import BBLRAGPipeline
 from middleware import SecurityHeadersMiddleware
+from middleware.request_id import RequestIDMiddleware
 from admin_bootstrap import ensure_admin_exists
 
 # Import routers
@@ -78,6 +79,9 @@ app = FastAPI(
 # Configure rate limiter
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Request ID tracking middleware (first, so all logs have request ID)
+app.add_middleware(RequestIDMiddleware)
 
 # Security headers middleware
 # Set ENFORCE_HTTPS=true in production

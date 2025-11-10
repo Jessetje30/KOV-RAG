@@ -1,7 +1,8 @@
 """OpenAI LLM provider implementation."""
 import asyncio
 import logging
-from typing import List, Tuple
+from pathlib import Path
+from typing import List, Tuple, Optional
 from concurrent.futures import ThreadPoolExecutor
 
 from openai import OpenAI
@@ -14,6 +15,7 @@ from config import (
 )
 from rag.llm.base import BaseLLMProvider
 from rag.llm.prompts import SystemPrompts, SummarizationPrompts
+from rag.llm.embedding_cache import EmbeddingCache
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +25,9 @@ class OpenAILLMProvider(BaseLLMProvider):
 
     def __init__(self, api_key: str = OPENAI_API_KEY,
                  llm_model: str = OPENAI_LLM_MODEL,
-                 embed_model: str = OPENAI_EMBED_MODEL):
+                 embed_model: str = OPENAI_EMBED_MODEL,
+                 enable_cache: bool = True,
+                 cache_dir: Optional[Path] = None):
         """
         Initialize OpenAI LLM provider.
 
@@ -31,6 +35,8 @@ class OpenAILLMProvider(BaseLLMProvider):
             api_key: OpenAI API key
             llm_model: Name of OpenAI LLM model (default: gpt-5)
             embed_model: Name of OpenAI embedding model (default: text-embedding-3-large)
+            enable_cache: Enable embedding caching (default: True)
+            cache_dir: Directory for cache persistence (default: ./embedding_cache)
         """
         if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable must be set")
@@ -47,9 +53,17 @@ class OpenAILLMProvider(BaseLLMProvider):
         self.embedding_dimension = EMBEDDING_DIMENSION
         logger.info(f"Embedding dimension: {self.embedding_dimension}")
 
+        # Initialize embedding cache
+        if enable_cache:
+            if cache_dir is None:
+                cache_dir = Path(__file__).parent.parent.parent / "embedding_cache"
+            self.embedding_cache = EmbeddingCache(cache_dir=cache_dir, max_memory_items=1000)
+        else:
+            self.embedding_cache = None
+
     def get_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
-        Generate embeddings for a list of texts using OpenAI.
+        Generate embeddings for a list of texts using OpenAI with caching.
 
         Args:
             texts: List of texts to embed
@@ -57,8 +71,54 @@ class OpenAILLMProvider(BaseLLMProvider):
         Returns:
             List of embedding vectors
         """
-        embeddings = []
+        # If cache is disabled, fetch all from API
+        if not self.embedding_cache:
+            return self._fetch_embeddings_from_api(texts)
 
+        # Check cache for all texts
+        cached_results = self.embedding_cache.get_batch(texts)
+
+        # Separate cached and uncached texts
+        embeddings = []
+        texts_to_fetch = []
+        indices_to_fetch = []
+
+        for i, text in enumerate(texts):
+            cached_embedding = cached_results.get(text)
+            if cached_embedding is not None:
+                embeddings.append((i, cached_embedding))
+            else:
+                texts_to_fetch.append(text)
+                indices_to_fetch.append(i)
+
+        # Fetch uncached embeddings from API
+        if texts_to_fetch:
+            logger.info(f"Fetching {len(texts_to_fetch)} embeddings from API (cache miss)")
+            new_embeddings = self._fetch_embeddings_from_api(texts_to_fetch)
+
+            # Cache the new embeddings
+            self.embedding_cache.put_batch(texts_to_fetch, new_embeddings)
+
+            # Add to results
+            for idx, embedding in zip(indices_to_fetch, new_embeddings):
+                embeddings.append((idx, embedding))
+        else:
+            logger.info(f"All {len(texts)} embeddings from cache (cache hit)")
+
+        # Sort by original index and extract embeddings
+        embeddings.sort(key=lambda x: x[0])
+        return [emb for _, emb in embeddings]
+
+    def _fetch_embeddings_from_api(self, texts: List[str]) -> List[List[float]]:
+        """
+        Fetch embeddings from OpenAI API (internal method).
+
+        Args:
+            texts: List of texts to embed
+
+        Returns:
+            List of embedding vectors
+        """
         try:
             # OpenAI API supports batch processing
             response = self.client.embeddings.create(
@@ -66,13 +126,11 @@ class OpenAILLMProvider(BaseLLMProvider):
                 input=texts
             )
 
-            for data in response.data:
-                embeddings.append(data.embedding)
-
+            embeddings = [data.embedding for data in response.data]
             return embeddings
 
         except Exception as e:
-            logger.error(f"Error getting embeddings: {str(e)}")
+            logger.error(f"Error getting embeddings from API: {str(e)}")
             raise
 
     def generate_answer(self, prompt: str, max_length: int = 512) -> str:
