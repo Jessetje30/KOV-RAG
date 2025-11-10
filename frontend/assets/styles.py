@@ -64,6 +64,17 @@ tailwind.config = {
         width: 0 !important;
     }
 
+    /* Hide Streamlit auto-generated page navigation */
+    [data-testid="stSidebarNav"] {
+        display: none !important;
+    }
+
+    /* Show sidebar collapse button (will be auto-expanded on main page) */
+    [data-testid="stSidebarCollapseButton"] button {
+        background: transparent !important;
+        border: none !important;
+    }
+
     /* Compact Streamlit elements */
     .element-container {
         margin-bottom: 0.5rem !important;

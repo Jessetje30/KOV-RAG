@@ -16,6 +16,21 @@ def show_main_page(cookies):
     Args:
         cookies: Cookie manager instance
     """
+    # Auto-expand sidebar on main page
+    st.markdown("""
+    <script>
+    setTimeout(function() {
+        const sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
+        if (sidebar && sidebar.getAttribute('aria-expanded') === 'false') {
+            const collapseButton = window.parent.document.querySelector('[data-testid="stSidebarCollapseButton"] button');
+            if (collapseButton) {
+                collapseButton.click();
+            }
+        }
+    }, 100);
+    </script>
+    """, unsafe_allow_html=True)
+
     # Sidebar
     with st.sidebar:
         # BBL Branding

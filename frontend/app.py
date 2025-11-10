@@ -10,7 +10,7 @@ from streamlit_cookies_manager import EncryptedCookieManager
 st.set_page_config(
     page_title="BBL RAG - Kijk op Veiligheid",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # Import modules after page config
