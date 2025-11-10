@@ -175,6 +175,17 @@ tailwind.config = {
         border-right: 1px solid #E4E4E7 !important;
     }
 
+    /* Hide collapsed sidebar completely on login page */
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+        display: none !important;
+    }
+
+    /* Also hide sidebar background when collapsed */
+    section[data-testid="stSidebar"].st-emotion-cache-1gwvy71,
+    section[data-testid="stSidebar"].st-emotion-cache-1cypcdb {
+        display: none !important;
+    }
+
     /* Minimalist sidebar buttons */
     section[data-testid="stSidebar"] button[kind="secondary"] {
         background: white !important;
