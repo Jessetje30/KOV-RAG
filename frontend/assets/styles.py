@@ -199,6 +199,7 @@ tailwind.config = {
 
     /* Completely remove sidebar when collapsed (login page) */
     section[data-testid="stSidebar"][aria-expanded="false"] {
+        display: none !important;
         width: 0 !important;
         min-width: 0 !important;
         max-width: 0 !important;
@@ -211,6 +212,11 @@ tailwind.config = {
 
     /* Remove any sidebar remnants and backgrounds */
     section[data-testid="stSidebar"][aria-expanded="false"] > * {
+        display: none !important;
+    }
+
+    /* Also hide the collapse button when sidebar is collapsed */
+    section[data-testid="stSidebar"][aria-expanded="false"] + div button[data-testid="stSidebarCollapseButton"] {
         display: none !important;
     }
 
@@ -385,9 +391,33 @@ function hideCollapsedSidebar() {
     if (sidebar) {
         const isCollapsed = sidebar.getAttribute('aria-expanded') === 'false';
         if (isCollapsed) {
+            // Force hide the sidebar completely
             sidebar.style.display = 'none';
+            sidebar.style.width = '0';
+            sidebar.style.minWidth = '0';
+            sidebar.style.maxWidth = '0';
+            sidebar.style.visibility = 'hidden';
+            sidebar.style.opacity = '0';
+
+            // Hide collapse button when sidebar is hidden
+            const collapseButton = document.querySelector('button[data-testid="stSidebarCollapseButton"]');
+            if (collapseButton) {
+                collapseButton.style.display = 'none';
+            }
         } else {
+            // Show sidebar when expanded
             sidebar.style.display = '';
+            sidebar.style.width = '';
+            sidebar.style.minWidth = '';
+            sidebar.style.maxWidth = '';
+            sidebar.style.visibility = '';
+            sidebar.style.opacity = '';
+
+            // Show collapse button when sidebar is visible
+            const collapseButton = document.querySelector('button[data-testid="stSidebarCollapseButton"]');
+            if (collapseButton) {
+                collapseButton.style.display = '';
+            }
         }
     }
 }
