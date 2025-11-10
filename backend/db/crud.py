@@ -1,8 +1,9 @@
 """Database CRUD operations and repository classes."""
 from typing import Optional, List
 from sqlalchemy.orm import Session
+import bcrypt
 
-from db.models import UserDB, ChatSessionDB, ChatMessageDB, pwd_context, truncate_password_for_bcrypt
+from db.models import UserDB, ChatSessionDB, ChatMessageDB, truncate_password_for_bcrypt
 
 
 class UserRepository:
@@ -10,9 +11,12 @@ class UserRepository:
 
     @staticmethod
     def hash_password(password: str) -> str:
-        """Hash a password using bcrypt."""
+        """Hash a password using bcrypt directly."""
         password_truncated = truncate_password_for_bcrypt(password)
-        return pwd_context.hash(password_truncated)
+        password_bytes = password_truncated.encode('utf-8')
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password_bytes, salt)
+        return hashed.decode('utf-8')
 
     @staticmethod
     def create_user(db: Session, username: str, email: str, password: str) -> UserDB:

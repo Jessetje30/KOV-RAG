@@ -4,6 +4,7 @@ Main application page with sidebar navigation.
 import streamlit as st
 from services.api_client import api_request
 from utils.auth import logout
+from utils.document_helpers import get_bbl_document_count
 from pages.query import show_query_page
 from pages.documents import show_manage_documents_page
 from pages.admin import show_admin_panel
@@ -65,8 +66,7 @@ def show_main_page(cookies):
         # Info over BBL documenten (dynamisch)
         documents_response = api_request("/api/documents", auth=True)
         if documents_response:
-            bbl_docs = [doc for doc in documents_response.get("documents", []) if doc['document_id'].startswith('BBL_')]
-            doc_count = len(bbl_docs)
+            doc_count = get_bbl_document_count(documents_response)
             if doc_count > 0:
                 st.info(f"**BBL Database**\n\n{doc_count} artikelen beschikbaar")
             else:

@@ -2,14 +2,10 @@
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, JSON, Boolean, Enum as SQLEnum
 from sqlalchemy.orm import relationship
-from passlib.context import CryptContext
 import enum
 import bcrypt
 
 from db.base import Base
-
-# Password hashing context (kept for backwards compatibility with hash creation)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class UserRole(str, enum.Enum):

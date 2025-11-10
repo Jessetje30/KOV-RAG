@@ -1,52 +1,51 @@
 # ============================================
 # RAG BBL/KOV Application - Backend Dependencies
-# Last updated: November 4, 2025
+# Last updated: January 10, 2025
 # Python: >=3.12, <3.14
 # ============================================
 
 # FastAPI and web server
-fastapi==0.121.0
-uvicorn[standard]==0.38.0
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
 python-multipart==0.0.20
 
 # Database
-sqlalchemy==2.0.44
-alembic==1.17.1
+sqlalchemy==2.0.36
+alembic==1.14.0
 
 # Authentication and security
 pyjwt==2.10.1
-passlib[bcrypt]==1.7.4
-bcrypt==5.0.0
+bcrypt==4.2.1
 slowapi==0.1.9
 
 # OpenAI API
-openai==2.7.1
+openai==1.58.1
 
 # Qdrant vector database client
-qdrant-client==1.15.1
+qdrant-client==1.12.1
 
 # Document processing
 PyMuPDF==1.26.5
-python-docx==1.2.0
+python-docx==1.1.2
 
 # Data validation
-pydantic==2.12.3
-pydantic[email]==2.12.3
+pydantic==2.10.4
+pydantic[email]==2.10.4
 
 # Environment variables
-python-dotenv==1.2.1
+python-dotenv==1.0.1
 
 # Email services
-resend==2.19.0
+resend==2.6.0
 
 # HTTP client
 httpx==0.28.1
 
 # Utilities
-numpy==2.3.4
+numpy==1.26.4
 
 # Testing
-pytest==8.4.2
-pytest-asyncio==1.2.0
-pytest-cov==7.0.0
-pytest-mock==3.15.1
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+pytest-mock==3.14.0
