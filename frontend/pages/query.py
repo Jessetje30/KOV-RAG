@@ -3,6 +3,8 @@ BBL Query page - Ask questions about BBL documents.
 """
 import streamlit as st
 from services.api_client import api_request
+from utils.security import sanitize_html, validate_query
+from utils.document_helpers import get_bbl_document_count
 
 
 def show_query_page():
@@ -19,9 +21,8 @@ def show_query_page():
         st.info("Het BBL moet worden geladen door een administrator. Neem contact op met de systeembeheerder.")
         return
 
-    # Get BBL document count
-    bbl_docs = [doc for doc in documents_response.get("documents", []) if doc['document_id'].startswith('BBL_')]
-    bbl_count = len(bbl_docs)
+    # Get BBL document count using utility function
+    bbl_count = get_bbl_document_count(documents_response)
 
     # Model information box
     st.markdown(f"""
@@ -65,10 +66,10 @@ def show_query_page():
     submit = st.button("Zoek in BBL", use_container_width=True)
 
     if submit:
-        if not query.strip():
-            st.error("Voer een vraag in")
-        elif len(query.strip()) < 20:
-            st.error("Je vraag moet minimaal 20 tekens bevatten")
+        # Validate query input
+        is_valid, error_msg = validate_query(query)
+        if not is_valid:
+            st.error(error_msg)
         else:
             with st.spinner("BBL doorzoeken..."):
                 # Beperk tot top 5 meest relevante artikelen
@@ -127,8 +128,9 @@ def show_query_page():
 
                 full_text = source["text"]
 
-                # Show AI-generated summary in a styled box
-                st.markdown(f'<div class="source-box"><strong>AI Samenvatting (GPT-4-turbo):</strong><br>{summary}</div>', unsafe_allow_html=True)
+                # Show AI-generated summary in a styled box (sanitized to prevent XSS)
+                sanitized_summary = sanitize_html(summary)
+                st.markdown(f'<div class="source-box"><strong>AI Samenvatting (GPT-4-turbo):</strong><br>{sanitized_summary}</div>', unsafe_allow_html=True)
 
                 # Full text in expander
                 with st.expander("Lees volledige artikel"):

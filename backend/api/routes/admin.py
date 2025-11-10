@@ -345,6 +345,13 @@ async def update_user(
         HTTPException: If user not found or trying to modify own admin status
     """
     try:
+        # Validate user_id
+        if user_id <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid user ID"
+            )
+
         # Get user to update
         user = db.query(UserDB).filter(UserDB.id == user_id).first()
         if not user:

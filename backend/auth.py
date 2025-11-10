@@ -74,19 +74,20 @@ def decode_access_token(token: str) -> Optional[TokenData]:
         return None
 
 
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
-) -> User:
+async def _authenticate_user_from_token(
+    credentials: HTTPAuthorizationCredentials,
+    db: Session
+) -> UserDB:
     """
-    Dependency to get the current authenticated user.
+    Internal helper to authenticate user from token.
+    Shared logic for get_current_user and get_current_user_db.
 
     Args:
         credentials: HTTP Bearer credentials from the request
         db: Database session
 
     Returns:
-        User: Current authenticated user
+        UserDB: Authenticated user database object
 
     Raises:
         HTTPException: If authentication fails
@@ -116,6 +117,29 @@ async def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive",
         )
+
+    return user_db
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+) -> User:
+    """
+    Dependency to get the current authenticated user.
+
+    Args:
+        credentials: HTTP Bearer credentials from the request
+        db: Database session
+
+    Returns:
+        User: Current authenticated user (Pydantic model)
+
+    Raises:
+        HTTPException: If authentication fails
+    """
+    # Authenticate and get database user
+    user_db = await _authenticate_user_from_token(credentials, db)
 
     # Convert to Pydantic model
     user = User(
@@ -148,33 +172,7 @@ async def get_current_user_db(
     Raises:
         HTTPException: If authentication fails
     """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    # Get token from credentials
-    token = credentials.credentials
-
-    # Decode token
-    token_data = decode_access_token(token)
-    if token_data is None or token_data.username is None:
-        raise credentials_exception
-
-    # Get user from database
-    user_db = UserRepository.get_user_by_username(db, username=token_data.username)
-    if user_db is None:
-        raise credentials_exception
-
-    # Check if user is active
-    if not user_db.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is inactive",
-        )
-
-    return user_db
+    return await _authenticate_user_from_token(credentials, db)
 
 
 def verify_token(token: str) -> bool:

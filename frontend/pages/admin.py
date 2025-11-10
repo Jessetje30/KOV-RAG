@@ -3,6 +3,12 @@ Admin panel for user management and BBL document uploads.
 """
 import streamlit as st
 from services.api_client import api_request
+from utils.security import validate_email, sanitize_html
+
+
+# Maximum file size in bytes (50 MB)
+MAX_FILE_SIZE_MB = 50
+MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024
 
 
 def show_admin_panel():
@@ -29,8 +35,10 @@ def show_admin_panel():
             submit = st.form_submit_button("Uitnodiging Versturen", use_container_width=True)
 
             if submit:
-                if not email or '@' not in email:
-                    st.error("Voer een geldig email adres in")
+                # Validate email input
+                is_valid, error_msg = validate_email(email)
+                if not is_valid:
+                    st.error(error_msg)
                 else:
                     with st.spinner("Uitnodiging versturen..."):
                         response = api_request(
@@ -102,11 +110,14 @@ def show_admin_panel():
             st.markdown("#### Bestandsinformatie")
             col1, col2 = st.columns(2)
             with col1:
-                st.write(f"**Bestandsnaam:** {uploaded_file.name}")
+                st.write(f"**Bestandsnaam:** {sanitize_html(uploaded_file.name)}")
             with col2:
                 st.write(f"**Grootte:** {uploaded_file.size / 1024:.2f} KB")
 
-            if st.button("Upload en Verwerk", use_container_width=True, key="upload_submit"):
+            # Validate file size
+            if uploaded_file.size > MAX_FILE_SIZE:
+                st.error(f"Bestand te groot. Maximaal {MAX_FILE_SIZE_MB} MB toegestaan.")
+            elif st.button("Upload en Verwerk", use_container_width=True, key="upload_submit"):
                 with st.spinner("Document uploaden en verwerken..."):
                     files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
 

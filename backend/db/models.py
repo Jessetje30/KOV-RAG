@@ -2,14 +2,10 @@
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, JSON, Boolean, Enum as SQLEnum
 from sqlalchemy.orm import relationship
-from passlib.context import CryptContext
 import enum
 import bcrypt
 
 from db.base import Base
-
-# Password hashing context (kept for backwards compatibility with hash creation)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class UserRole(str, enum.Enum):
@@ -137,3 +133,19 @@ class UserInvitationDB(Base):
     # Relationships
     inviter = relationship("UserDB", foreign_keys=[invited_by], back_populates="invitations_sent")
     accepted_user = relationship("UserDB", foreign_keys=[user_id])
+
+
+class RefreshTokenDB(Base):
+    """SQLAlchemy model for refresh_tokens table."""
+    __tablename__ = "refresh_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String(255), unique=True, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    created_at = Column(DateTime, default=utc_now)
+    expires_at = Column(DateTime, nullable=False)
+    revoked_at = Column(DateTime, nullable=True)  # When token was revoked
+    is_revoked = Column(Boolean, default=False, nullable=False)
+
+    # Relationship
+    user = relationship("UserDB")
