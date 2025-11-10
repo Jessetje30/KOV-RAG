@@ -293,19 +293,12 @@ tailwind.config = {
         height: 2.5rem !important;
     }
 
-    /* Compact form spacing - remove border */
-    .stForm {
+    /* Compact form spacing - remove all form borders */
+    .stForm,
+    [data-testid="stForm"],
+    [class*="st-emotion-cache"] form,
+    [class*="st-emotion-cache-"][class*="earswc"] {
         padding: 0 !important;
-        border: none !important;
-    }
-
-    /* Remove form container border */
-    [data-testid="stForm"] {
-        border: none !important;
-    }
-
-    /* Remove border from emotion cache form container */
-    .st-emotion-cache-1earswc {
         border: none !important;
     }
 
