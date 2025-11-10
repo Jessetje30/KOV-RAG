@@ -1,8 +1,8 @@
 # Streamlit web framework
-streamlit==1.41.1
+streamlit==1.51.0
 
 # HTTP requests
-requests==2.32.3
+requests==2.32.4
 
 # Environment variables
 python-dotenv==1.0.1
