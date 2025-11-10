@@ -13,6 +13,10 @@ def apply_custom_styles():
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+<!-- Google Material Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
 <!-- Tailwind CSS 4.0 CDN -->
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
 <script>
@@ -46,6 +50,24 @@ tailwind.config = {
     /* Import Inter font */
     * {
         font-family: 'Inter', -apple-system, system-ui, sans-serif !important;
+    }
+
+    /* Material Icons styling */
+    .st-emotion-cache-44e1u9,
+    [data-testid="stIconMaterial"],
+    .material-icons,
+    .material-symbols-outlined {
+        font-family: 'Material Icons', 'Material Symbols Outlined' !important;
+        font-weight: normal !important;
+        font-style: normal !important;
+        font-size: 24px !important;
+        display: inline-block !important;
+        line-height: 1 !important;
+        text-transform: none !important;
+        letter-spacing: normal !important;
+        word-wrap: normal !important;
+        white-space: nowrap !important;
+        direction: ltr !important;
     }
 
     /* Flexbox utility classes */
