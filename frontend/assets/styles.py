@@ -291,15 +291,18 @@ tailwind.config = {
 document.addEventListener('DOMContentLoaded', function() {
     fixPasswordTabOrder();
     enableEnterToSubmit();
+    hideCollapsedSidebar();
 });
 
 setTimeout(function() {
     fixPasswordTabOrder();
     enableEnterToSubmit();
+    hideCollapsedSidebar();
 }, 1000);
 
 setTimeout(function() {
     enableEnterToSubmit();
+    hideCollapsedSidebar();
 }, 2000);
 
 function fixPasswordTabOrder() {
@@ -334,9 +337,22 @@ function handleEnterKey(event) {
     }
 }
 
+function hideCollapsedSidebar() {
+    const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+    if (sidebar) {
+        const isCollapsed = sidebar.getAttribute('aria-expanded') === 'false';
+        if (isCollapsed) {
+            sidebar.style.display = 'none';
+        } else {
+            sidebar.style.display = '';
+        }
+    }
+}
+
 const observer = new MutationObserver(function(mutations) {
     fixPasswordTabOrder();
     enableEnterToSubmit();
+    hideCollapsedSidebar();
 });
 observer.observe(document.body, { childList: true, subtree: true });
 </script>
