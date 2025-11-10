@@ -169,10 +169,27 @@ tailwind.config = {
         border-left-color: #DC2626;
     }
 
-    /* Minimalist Sidebar */
+    /* Minimalist Sidebar - only show when expanded (authenticated pages) */
     section[data-testid="stSidebar"] {
         background: #FAFAFA !important;
         border-right: 1px solid #E4E4E7 !important;
+    }
+
+    /* Completely remove sidebar when collapsed (login page) */
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        overflow: hidden !important;
+        visibility: hidden !important;
+    }
+
+    /* Remove any sidebar remnants and backgrounds */
+    section[data-testid="stSidebar"][aria-expanded="false"] > * {
+        display: none !important;
     }
 
     /* Minimalist sidebar buttons */
