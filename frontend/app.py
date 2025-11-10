@@ -89,71 +89,142 @@ tailwind.config = {
         letter-spacing: -0.02em;
     }
 
-    /* Modern card styling with hover effects */
+    /* Minimalist card styling */
     .modern-card {
-        background: white;
+        background: #FAFAFA;
         border: 1px solid #E4E4E7;
-        border-radius: 1rem;
+        border-radius: 0.375rem;
         padding: 1.5rem;
         margin: 1rem 0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: border-color 0.15s;
     }
 
     .modern-card:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        transform: translateY(-2px);
+        border-color: #A1A1AA;
     }
 
-    /* Success box - modern green */
+    /* Success box - flat green */
     .success-box {
         padding: 1rem 1.25rem;
-        border-radius: 0.75rem;
-        background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
-        border: 1px solid #BBF7D0;
+        border-radius: 0.375rem;
+        background: #F0FDF4;
+        border-left: 3px solid #22C55E;
         color: #166534;
         margin: 1rem 0;
-        font-weight: 500;
+        font-weight: 400;
     }
 
-    /* Error box - modern red */
+    /* Error box - flat red */
     .error-box {
         padding: 1rem 1.25rem;
-        border-radius: 0.75rem;
-        background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
-        border: 1px solid #FECACA;
+        border-radius: 0.375rem;
+        background: #FEF2F2;
+        border-left: 3px solid #EF4444;
         color: #991B1B;
         margin: 1rem 0;
-        font-weight: 500;
+        font-weight: 400;
     }
 
-    /* Info box - modern blue */
+    /* Info box - flat blue */
     .info-box {
-        padding: 1.25rem;
-        border-radius: 0.75rem;
-        background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
-        border: 1px solid #BFDBFE;
+        padding: 1rem 1.25rem;
+        border-radius: 0.375rem;
+        background: #EFF6FF;
+        border-left: 3px solid #3B82F6;
         color: #1E40AF;
         margin: 1rem 0;
-        font-weight: 500;
+        font-weight: 400;
     }
 
-    /* Source box - modern style with accent */
+    /* Source box - minimalist with subtle accent */
     .source-box {
         padding: 1.25rem;
-        border-radius: 0.875rem;
-        background: white;
+        border-radius: 0.375rem;
+        background: #FAFAFA;
         border: 1px solid #E4E4E7;
-        border-left: 4px solid #FF6B35;
+        border-left: 2px solid #FF6B35;
         color: #18181B;
         margin: 1rem 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        transition: all 0.2s;
+        transition: border-color 0.15s;
     }
 
     .source-box:hover {
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-        border-left-color: #CC4620;
+        border-left-color: #DC2626;
+    }
+
+    /* Minimalist Sidebar */
+    section[data-testid="stSidebar"] {
+        background: #FAFAFA !important;
+        border-right: 1px solid #E4E4E7 !important;
+    }
+
+    /* Minimalist sidebar buttons */
+    section[data-testid="stSidebar"] button[kind="secondary"] {
+        background: white !important;
+        color: #3F3F46 !important;
+        border: 1px solid #D4D4D8 !important;
+        font-weight: 400 !important;
+        transition: border-color 0.15s !important;
+    }
+
+    section[data-testid="stSidebar"] button[kind="secondary"]:hover {
+        background: white !important;
+        border-color: #52525B !important;
+    }
+
+    /* Hide default streamlit elements in sidebar */
+    section[data-testid="stSidebar"] .stRadio {
+        display: none;
+    }
+
+    /* Hide navigation button containers completely */
+    section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"]:has(button[aria-label=""]) {
+        height: 0 !important;
+        overflow: visible !important;
+        margin: 0 !important;
+    }
+
+    /* Make navigation buttons invisible overlays */
+    section[data-testid="stSidebar"] button[aria-label=""] {
+        position: absolute !important;
+        top: -2.5rem !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 2.5rem !important;
+        opacity: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
+        z-index: 10 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Minimalist primary buttons */
+    button[kind="primary"] {
+        background: #18181B !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 400 !important;
+        transition: background 0.15s !important;
+    }
+
+    button[kind="primary"]:hover {
+        background: #000000 !important;
+    }
+
+    /* Minimalist button styling */
+    .stButton button {
+        border-radius: 0.25rem !important;
+        font-weight: 400 !important;
+        padding: 0.5rem 1rem !important;
+        transition: all 0.15s !important;
+    }
+
+    /* Remove button outline on focus */
+    button:focus {
+        outline: none !important;
+        box-shadow: 0 0 0 2px #E4E4E7 !important;
     }
 
     /* Responsive breakpoints */
@@ -170,6 +241,9 @@ tailwind.config = {
     @media (hover: none) and (pointer: coarse) {
         .modern-card:hover, .source-box:hover {
             transform: none;
+        }
+        button:hover {
+            transform: none !important;
         }
     }
 </style>
@@ -409,36 +483,100 @@ def show_auth_page():
 # Page: Main Application
 def show_main_page():
     """Display main application page."""
+    # Initialize current page in session state if not exists
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = "BBL Vragen Stellen"
+
     # Sidebar
     with st.sidebar:
-        # BBL Branding
-        st.markdown("## BBL RAG")
-        st.markdown("**Kijk op Veiligheid**")
-        st.caption("Besluit Bouwwerken Leefomgeving")
+        # Modern BBL Branding
+        st.markdown("""
+        <div style="text-align: center; padding: 1.5rem 0 1rem 0;">
+            <div style="font-size: 1.75rem; font-weight: 700; color: #FF6B35; margin-bottom: 0.25rem; letter-spacing: -0.02em;">
+                BBL RAG
+            </div>
+            <div style="font-size: 0.875rem; font-weight: 600; color: #3F3F46; margin-bottom: 0.25rem;">
+                Kijk op Veiligheid
+            </div>
+            <div style="font-size: 0.75rem; color: #71717A;">
+                Besluit Bouwwerken Leefomgeving
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        st.markdown("---")
+        st.markdown('<div style="height: 1px; background: #E4E4E7; margin: 1rem 0;"></div>', unsafe_allow_html=True)
 
-        st.markdown(f"### Welkom, {st.session_state.user['username']}!")
-        st.markdown(f"**Email:** {st.session_state.user['email']}")
+        # User info card
+        st.markdown(f"""
+        <div style="background: #FAFAFA; border: 1px solid #E4E4E7; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem;">
+            <div style="font-size: 0.875rem; font-weight: 600; color: #18181B; margin-bottom: 0.5rem;">
+                {st.session_state.user['username']}
+            </div>
+            <div style="font-size: 0.75rem; color: #71717A;">
+                {st.session_state.user['email']}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        # Show admin badge
+        # Admin badge
         if st.session_state.user.get('role') == 'admin':
-            st.markdown("**Administrator**")
+            st.markdown("""
+            <div style="display: inline-block; background: #18181B; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 400; margin-bottom: 1rem;">
+                Admin
+            </div>
+            """, unsafe_allow_html=True)
 
-        st.markdown("---")
+        st.markdown('<div style="height: 1px; background: #E4E4E7; margin: 1rem 0;"></div>', unsafe_allow_html=True)
 
-        # Navigation - add Admin Panel for admins
-        nav_options = ["BBL Vragen Stellen", "BBL Documenten"]
+        # Modern Navigation Menu
+        st.markdown('<div style="font-size: 0.75rem; font-weight: 600; color: #71717A; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Navigatie</div>', unsafe_allow_html=True)
+
+        # Navigation container
+        query_active = st.session_state.current_page == "BBL Vragen Stellen"
+        docs_active = st.session_state.current_page == "BBL Documenten"
+        admin_active = st.session_state.current_page == "Admin Panel"
+
+        # Query item
+        st.markdown(f"""
+        <div style="padding: 0.75rem 0; border-bottom: {'2px solid #18181B' if query_active else '1px solid #E4E4E7'}; display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 0.875rem; font-weight: {'500' if query_active else '400'}; color: {'#18181B' if query_active else '#52525B'};">
+                BBL Vragen Stellen
+            </div>
+            <div style="font-size: 0.875rem; color: #A1A1AA;">›</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("‎", key="nav_query", use_container_width=True):
+            st.session_state.current_page = "BBL Vragen Stellen"
+            st.rerun()
+
+        # Documents item
+        st.markdown(f"""
+        <div style="padding: 0.75rem 0; border-bottom: {'2px solid #18181B' if docs_active else '1px solid #E4E4E7'}; display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 0.875rem; font-weight: {'500' if docs_active else '400'}; color: {'#18181B' if docs_active else '#52525B'};">
+                BBL Documenten
+            </div>
+            <div style="font-size: 0.875rem; color: #A1A1AA;">›</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("‎", key="nav_docs", use_container_width=True):
+            st.session_state.current_page = "BBL Documenten"
+            st.rerun()
+
+        # Admin Panel item (only for admins)
         if st.session_state.user.get('role') == 'admin':
-            nav_options.append("Admin Panel")
+            st.markdown(f"""
+            <div style="padding: 0.75rem 0; border-bottom: {'2px solid #18181B' if admin_active else '1px solid #E4E4E7'}; display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 0.875rem; font-weight: {'500' if admin_active else '400'}; color: {'#18181B' if admin_active else '#52525B'};">
+                    Admin Panel
+                </div>
+                <div style="font-size: 0.875rem; color: #A1A1AA;">›</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("‎", key="nav_admin", use_container_width=True):
+                st.session_state.current_page = "Admin Panel"
+                st.rerun()
 
-        page = st.radio(
-            "Navigation",
-            nav_options,
-            label_visibility="collapsed"
-        )
-
-        st.markdown("---")
+        st.markdown('<div style="height: 1px; background: #E4E4E7; margin: 1rem 0;"></div>', unsafe_allow_html=True)
 
         # Info over BBL versie (dynamisch)
         documents_response = api_request("/api/documents", auth=True)
@@ -446,17 +584,35 @@ def show_main_page():
             bbl_docs = [doc for doc in documents_response.get("documents", []) if doc['document_id'].startswith('BBL_')]
             doc_count = len(bbl_docs)
             if doc_count > 0:
-                st.info(f"**BBL Versie**: 2025-07-01\n\n{doc_count} artikelen beschikbaar")
+                st.markdown(f"""
+                <div class="info-box" style="font-size: 0.875rem;">
+                    <strong>BBL Versie</strong>: 2025-07-01<br>
+                    <strong>{doc_count}</strong> artikelen beschikbaar
+                </div>
+                """, unsafe_allow_html=True)
             else:
-                st.warning("**Geen BBL documenten**\n\nUpload BBL documenten via het Admin Panel")
+                st.markdown("""
+                <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 0.5rem; padding: 0.75rem; font-size: 0.875rem; color: #991B1B;">
+                    <strong>Geen BBL documenten</strong><br>
+                    Upload via Admin Panel
+                </div>
+                """, unsafe_allow_html=True)
         else:
-            st.warning("**Kan documenten niet laden**")
+            st.markdown("""
+            <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 0.5rem; padding: 0.75rem; font-size: 0.875rem; color: #991B1B;">
+                Kan documenten niet laden
+            </div>
+            """, unsafe_allow_html=True)
 
-        st.markdown("---")
+        st.markdown('<div style="height: 1px; background: #E4E4E7; margin: 1rem 0;"></div>', unsafe_allow_html=True)
 
-        if st.button("Logout", use_container_width=True):
+        # Logout button
+        if st.button("Uitloggen", use_container_width=True, key="logout_btn", type="secondary"):
             logout()
             st.rerun()
+
+    # Main content - use session state instead of radio selection
+    page = st.session_state.current_page
 
     # Main content
     if page == "BBL Vragen Stellen":
@@ -508,8 +664,6 @@ def show_query_page():
         - Wat zijn de regels voor energieprestatie van gebouwen?
         - Wat zijn de eisen voor ventilatie in verblijfsruimten?
         """)
-
-    st.markdown("---")
 
     # Query input
     query = st.text_area(
@@ -594,7 +748,6 @@ def show_query_page():
                 with st.expander("Lees volledige artikel"):
                     st.markdown(f"**Document:** {source['filename']}")
                     st.markdown(f"**Chunk:** {source['chunk_index']}")
-                    st.markdown("---")
                     st.markdown(full_text)
 
                 st.markdown("")  # Add spacing between sources
@@ -695,8 +848,6 @@ def show_manage_documents_page():
                                     st.success("Document deleted successfully!")
                                     st.rerun()
 
-                    st.markdown("---")
-
 
 # Page: Admin Panel
 def show_admin_panel():
@@ -708,8 +859,6 @@ def show_admin_panel():
     if st.session_state.user.get('role') != 'admin':
         st.error("Toegang geweigerd. Deze pagina is alleen toegankelijk voor administrators.")
         return
-
-    st.markdown("---")
 
     # Tabs for different admin functions
     tab1, tab2, tab3 = st.tabs(["Gebruiker Uitnodigen", "Gebruikers Beheren", "BBL Uploaden"])
@@ -752,7 +901,6 @@ def show_admin_panel():
             total = users_response.get('total', 0)
 
             st.markdown(f"**Totaal gebruikers:** {total}")
-            st.markdown("---")
 
             if not users:
                 st.info("Nog geen gebruikers geregistreerd.")
@@ -777,8 +925,6 @@ def show_admin_panel():
                     with col3:
                         # Show ID for reference
                         st.caption(f"ID: {user.get('id')}")
-
-                    st.markdown("---")
 
     with tab3:
         st.subheader("BBL Documenten Uploaden")
