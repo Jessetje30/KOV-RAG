@@ -304,6 +304,11 @@ tailwind.config = {
         border: none !important;
     }
 
+    /* Remove border from emotion cache form container */
+    .st-emotion-cache-1earswc {
+        border: none !important;
+    }
+
     /* Remove button outline on focus */
     button:focus {
         outline: none !important;
