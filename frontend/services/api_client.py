@@ -16,7 +16,8 @@ def api_request(
     method: str = "GET",
     data: Dict = None,
     files: Dict = None,
-    auth: bool = False
+    auth: bool = False,
+    silent_auth_errors: bool = False
 ) -> Optional[Dict[str, Any]]:
     """
     Make API request to backend.
@@ -27,6 +28,7 @@ def api_request(
         data: Request data (JSON)
         files: Files to upload
         auth: Whether to include authentication token
+        silent_auth_errors: If True, don't show error messages for 401 responses
 
     Returns:
         Response data or None if error
@@ -53,6 +55,9 @@ def api_request(
 
         if response.status_code in [200, 201]:
             return response.json()
+        elif response.status_code == 401 and silent_auth_errors:
+            # Silently handle authentication errors (expired/invalid tokens)
+            return None
         else:
             error_detail = response.json().get("detail", "Unknown error")
             st.error(f"Error: {error_detail}")
