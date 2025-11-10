@@ -1,167 +1,259 @@
 """
 CSS and JavaScript assets for the BBL RAG application.
+Modern styling with Tailwind CSS and Inter font.
 """
 import streamlit as st
 
 
 def apply_custom_styles():
-    """Apply custom CSS and JavaScript to the Streamlit app."""
+    """Apply modern custom CSS and JavaScript to the Streamlit app."""
     st.markdown("""
+<!-- Google Fonts - Inter (Modern 2025 font) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Tailwind CSS 4.0 CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+tailwind.config = {
+    theme: {
+        extend: {
+            colors: {
+                primary: {
+                    500: '#FF6B35',
+                    600: '#E85A2A',
+                    700: '#CC4620'
+                },
+                zinc: {
+                    50: '#FAFAFA',
+                    100: '#F4F4F5',
+                    600: '#52525B',
+                    700: '#3F3F46',
+                    800: '#27272A',
+                    900: '#18181B'
+                }
+            },
+            fontFamily: {
+                sans: ['Inter', 'system-ui', 'sans-serif']
+            }
+        }
+    }
+}
+</script>
+
 <style>
+    /* Import Inter font */
+    * {
+        font-family: 'Inter', -apple-system, system-ui, sans-serif !important;
+    }
+
+    /* Modern header styling */
     .main-header {
         font-size: 2.5rem;
-        font-weight: bold;
-        margin-bottom: 1rem;
-        color: var(--text-color);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #18181B;
+        letter-spacing: -0.02em;
     }
 
-    /* Light theme boxes */
+    /* Minimalist card styling */
+    .modern-card {
+        background: #FAFAFA;
+        border: 1px solid #E4E4E7;
+        border-radius: 0.375rem;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        transition: border-color 0.15s;
+    }
+
+    .modern-card:hover {
+        border-color: #A1A1AA;
+    }
+
+    /* Success box - flat green */
     .success-box {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        background-color: #d4edda;
-        border: 1px solid #c3e6cb;
-        color: #155724;
+        padding: 1rem 1.25rem;
+        border-radius: 0.375rem;
+        background: #F0FDF4;
+        border-left: 3px solid #22C55E;
+        color: #166534;
         margin: 1rem 0;
-    }
-    .error-box {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        color: #721c24;
-        margin: 1rem 0;
-    }
-    .info-box {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        background-color: #d1ecf1;
-        border: 1px solid #bee5eb;
-        color: #0c5460;
-        margin: 1rem 0;
-    }
-    .source-box {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        color: #212529;
-        margin: 0.5rem 0;
+        font-weight: 400;
     }
 
-    /* Dark theme - using Streamlit's data-testid attribute on body */
-    [data-testid="stAppViewContainer"][data-theme="dark"] .success-box,
-    body[data-theme="dark"] .success-box {
-        background-color: #1e4620 !important;
-        border-color: #2d5a2e !important;
-        color: #a3d9a5 !important;
+    /* Error box - flat red */
+    .error-box {
+        padding: 1rem 1.25rem;
+        border-radius: 0.375rem;
+        background: #FEF2F2;
+        border-left: 3px solid #EF4444;
+        color: #991B1B;
+        margin: 1rem 0;
+        font-weight: 400;
     }
-    [data-testid="stAppViewContainer"][data-theme="dark"] .error-box,
-    body[data-theme="dark"] .error-box {
-        background-color: #4a1f1f !important;
-        border-color: #6b2c2c !important;
-        color: #f5a3a3 !important;
+
+    /* Info box - flat blue */
+    .info-box {
+        padding: 1rem 1.25rem;
+        border-radius: 0.375rem;
+        background: #EFF6FF;
+        border-left: 3px solid #3B82F6;
+        color: #1E40AF;
+        margin: 1rem 0;
+        font-weight: 400;
     }
-    [data-testid="stAppViewContainer"][data-theme="dark"] .info-box,
-    body[data-theme="dark"] .info-box {
-        background-color: #1a3a42 !important;
-        border-color: #2a4f5a !important;
-        color: #a3d5e6 !important;
+
+    /* Source box - minimalist with subtle accent */
+    .source-box {
+        padding: 1.25rem;
+        border-radius: 0.375rem;
+        background: #FAFAFA;
+        border: 1px solid #E4E4E7;
+        border-left: 2px solid #FF6B35;
+        color: #18181B;
+        margin: 1rem 0;
+        transition: border-color 0.15s;
     }
-    [data-testid="stAppViewContainer"][data-theme="dark"] .source-box,
-    body[data-theme="dark"] .source-box {
-        background-color: #000000 !important;
-        border-color: #333333 !important;
-        color: #ffffff !important;
+
+    .source-box:hover {
+        border-left-color: #DC2626;
     }
-    [data-testid="stAppViewContainer"][data-theme="dark"] .main-header,
-    body[data-theme="dark"] .main-header {
-        color: #ffffff !important;
+
+    /* Minimalist Sidebar */
+    section[data-testid="stSidebar"] {
+        background: #FAFAFA !important;
+        border-right: 1px solid #E4E4E7 !important;
+    }
+
+    /* Minimalist sidebar buttons */
+    section[data-testid="stSidebar"] button[kind="secondary"] {
+        background: white !important;
+        color: #3F3F46 !important;
+        border: 1px solid #D4D4D8 !important;
+        font-weight: 400 !important;
+        transition: border-color 0.15s !important;
+    }
+
+    section[data-testid="stSidebar"] button[kind="secondary"]:hover {
+        background: white !important;
+        border-color: #52525B !important;
+    }
+
+    /* Hide default streamlit elements in sidebar */
+    section[data-testid="stSidebar"] .stRadio {
+        display: none;
+    }
+
+    /* Hide navigation button containers completely */
+    section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"]:has(button[aria-label=""]) {
+        height: 0 !important;
+        overflow: visible !important;
+        margin: 0 !important;
+    }
+
+    /* Make navigation buttons invisible overlays */
+    section[data-testid="stSidebar"] button[aria-label=""] {
+        position: absolute !important;
+        top: -2.5rem !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 2.5rem !important;
+        opacity: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
+        z-index: 10 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Minimalist primary buttons */
+    button[kind="primary"] {
+        background: #18181B !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 400 !important;
+        transition: background 0.15s !important;
+    }
+
+    button[kind="primary"]:hover {
+        background: #000000 !important;
+    }
+
+    /* Minimalist button styling */
+    .stButton button {
+        border-radius: 0.25rem !important;
+        font-weight: 400 !important;
+        padding: 0.5rem 1rem !important;
+        transition: all 0.15s !important;
+    }
+
+    /* Remove button outline on focus */
+    button:focus {
+        outline: none !important;
+        box-shadow: 0 0 0 2px #E4E4E7 !important;
+    }
+
+    /* Responsive breakpoints */
+    @media (max-width: 640px) {
+        .main-header {
+            font-size: 2rem;
+        }
+        .modern-card, .source-box {
+            padding: 1rem;
+        }
+    }
+
+    /* Touch optimization for mobile */
+    @media (hover: none) and (pointer: coarse) {
+        .modern-card:hover, .source-box:hover {
+            transform: none;
+        }
+        button:hover {
+            transform: none !important;
+        }
     }
 </style>
 
 <script>
-// Detect and apply dark mode
-function applyDarkModeStyles() {
-    const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const stApp = document.querySelector('.stApp');
-    const body = document.body;
-
-    if (stApp) {
-        if (isDark) {
-            stApp.setAttribute('data-theme', 'dark');
-            body.setAttribute('data-theme', 'dark');
-        } else {
-            stApp.setAttribute('data-theme', 'light');
-            body.setAttribute('data-theme', 'light');
-        }
-    }
-}
-
-// Apply dark mode on load
-applyDarkModeStyles();
-
-// Listen for theme changes
-if (window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyDarkModeStyles);
-}
-
-// Fix tab navigation: remove password visibility toggle buttons from tab order
+// Fix tab navigation and enable Enter to submit
 document.addEventListener('DOMContentLoaded', function() {
-    applyDarkModeStyles();
     fixPasswordTabOrder();
     enableEnterToSubmit();
 });
 
-// Also run after a short delay for Streamlit's dynamic rendering
 setTimeout(function() {
-    applyDarkModeStyles();
     fixPasswordTabOrder();
     enableEnterToSubmit();
 }, 1000);
 
-// Run again after longer delay to catch late-loading elements
 setTimeout(function() {
-    applyDarkModeStyles();
     enableEnterToSubmit();
 }, 2000);
 
 function fixPasswordTabOrder() {
-    // Find all password input containers
     const passwordInputs = document.querySelectorAll('input[type="password"]');
-
     passwordInputs.forEach(input => {
-        // Find the parent container
         const container = input.closest('div[data-baseweb="input"]') || input.parentElement;
-
-        // Find all buttons within this container (the visibility toggle)
         const buttons = container.querySelectorAll('button');
-
         buttons.forEach(button => {
-            // Remove from tab order
             button.setAttribute('tabindex', '-1');
         });
     });
 }
 
 function enableEnterToSubmit() {
-    // Find all textareas in forms
     const textareas = document.querySelectorAll('form textarea');
-
     textareas.forEach(textarea => {
-        // Remove existing listener to avoid duplicates
         textarea.removeEventListener('keydown', handleEnterKey);
-        // Add new listener
         textarea.addEventListener('keydown', handleEnterKey);
     });
 }
 
 function handleEnterKey(event) {
-    // Check if Enter was pressed (without Shift, which creates new line)
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
-
-        // Find the submit button in the same form
         const form = event.target.closest('form');
         if (form) {
             const submitButton = form.querySelector('button[kind="primary"], button[type="submit"]');
@@ -172,9 +264,7 @@ function handleEnterKey(event) {
     }
 }
 
-// Re-run when Streamlit reruns (on interaction)
 const observer = new MutationObserver(function(mutations) {
-    applyDarkModeStyles();
     fixPasswordTabOrder();
     enableEnterToSubmit();
 });
