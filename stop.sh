@@ -10,6 +10,20 @@ echo "Stopping RAG Application"
 echo "========================================"
 echo ""
 
+# Stop Streamlit frontend (if running)
+echo "Stopping Streamlit frontend..."
+STREAMLIT_PIDS=$(pgrep -f "streamlit run app.py" || true)
+if [ -n "$STREAMLIT_PIDS" ]; then
+    echo "Found Streamlit processes: $STREAMLIT_PIDS"
+    kill $STREAMLIT_PIDS 2>/dev/null || true
+    sleep 2
+    # Force kill if still running
+    kill -9 $STREAMLIT_PIDS 2>/dev/null || true
+    echo "✓ Streamlit stopped"
+else
+    echo "No Streamlit processes found"
+fi
+
 # Stop backend
 if [ -f backend.pid ]; then
     BACKEND_PID=$(cat backend.pid)

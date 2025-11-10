@@ -1,0 +1,26 @@
+# Streamlit Configuration for RAG Application
+# See: https://docs.streamlit.io/library/advanced-features/configuration
+
+[server]
+# Enable XSRF protection (recommended for security)
+enableXsrfProtection = true
+
+# Enable CORS and specify allowed origins
+# This allows the frontend to communicate with the backend API
+enableCORS = true
+corsAllowedOrigins = ["http://localhost:8000", "http://localhost:8501"]
+
+# Port configuration
+port = 8501
+address = "localhost"
+
+# Disable file watcher in production
+runOnSave = false
+
+[browser]
+# Disable auto-opening browser (useful for background processes)
+gatherUsageStats = false
+
+[theme]
+# Use light theme by default
+base = "light"
