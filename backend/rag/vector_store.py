@@ -1,7 +1,7 @@
 """Qdrant vector store wrapper."""
 import uuid
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 
 from qdrant_client import QdrantClient
@@ -11,7 +11,8 @@ from qdrant_client.models import (
     PointStruct,
     Filter,
     FieldCondition,
-    MatchValue
+    MatchValue,
+    MatchAny
 )
 
 from config import QDRANT_HOST, QDRANT_PORT, EMBEDDING_DIMENSION
@@ -120,6 +121,89 @@ class VectorStore:
         )
 
         logger.info(f"Found {len(results)} results for user {user_id}")
+        return results
+
+    def search_with_metadata_filters(
+        self,
+        collection_name: str,
+        query_embedding: List[float],
+        user_id: int,
+        top_k: int = 5,
+        functie_types: Optional[List[str]] = None,
+        bouw_type: Optional[str] = None,
+        thema_tags: Optional[List[str]] = None,
+        hoofdstuk_nr: Optional[str] = None
+    ) -> List[Any]:
+        """
+        Search with BBL metadata filters for intelligent filtering.
+
+        Args:
+            collection_name: Name of the collection
+            query_embedding: Query vector
+            user_id: Filter by user ID
+            top_k: Number of results to return
+            functie_types: Filter by functie types (Woonfunctie, Kantoorfunctie, etc.)
+            bouw_type: Filter by bouw type (Nieuwbouw / Bestaande bouw)
+            thema_tags: Filter by thema tags (brandveiligheid, ventilatie, etc.)
+            hoofdstuk_nr: Filter by hoofdstuk nummer
+
+        Returns:
+            List of search results from Qdrant
+        """
+        # Build filter conditions
+        filter_conditions = [
+            FieldCondition(key="user_id", match=MatchValue(value=user_id))
+        ]
+
+        # Filter by functie types (match ANY of the provided functie types)
+        if functie_types:
+            # For articles that have "Algemeen" as functie type, they should match ANY query
+            # So we need OR logic: (has matching functie_type) OR (has "Algemeen")
+            logger.info(f"Filtering by functie_types: {functie_types}")
+            filter_conditions.append(
+                FieldCondition(
+                    key="functie_types",
+                    match=MatchAny(any=functie_types + ["Algemeen"])  # Include general articles
+                )
+            )
+
+        # Filter by bouw type
+        if bouw_type:
+            logger.info(f"Filtering by bouw_type: {bouw_type}")
+            # Articles with no bouw_type (None) are general and should also match
+            # But Qdrant doesn't easily support "is null OR equals"
+            # So we'll just filter by exact match here
+            # General articles (with bouw_type=None) won't have this field filtered
+            filter_conditions.append(
+                FieldCondition(key="bouw_type", match=MatchValue(value=bouw_type))
+            )
+
+        # Filter by thema tags (match ANY of the provided tags)
+        if thema_tags:
+            logger.info(f"Filtering by thema_tags: {thema_tags}")
+            filter_conditions.append(
+                FieldCondition(
+                    key="thema_tags",
+                    match=MatchAny(any=thema_tags)
+                )
+            )
+
+        # Filter by hoofdstuk
+        if hoofdstuk_nr:
+            logger.info(f"Filtering by hoofdstuk_nr: {hoofdstuk_nr}")
+            filter_conditions.append(
+                FieldCondition(key="hoofdstuk_nr", match=MatchValue(value=hoofdstuk_nr))
+            )
+
+        # Perform search with filters
+        results = self.client.search(
+            collection_name=collection_name,
+            query_vector=query_embedding,
+            limit=top_k,
+            query_filter=Filter(must=filter_conditions) if len(filter_conditions) > 1 else None
+        )
+
+        logger.info(f"Found {len(results)} filtered results for user {user_id}")
         return results
 
     def delete_by_document_id(self, collection_name: str, document_id: str) -> None:

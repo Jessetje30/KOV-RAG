@@ -2,7 +2,7 @@
 import uuid
 import logging
 import time
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 from datetime import datetime, timezone
 
 from config import (
@@ -16,6 +16,8 @@ from rag.text_chunker import TextChunker
 from rag.vector_store import VectorStore
 from rag.llm.openai_provider import OpenAILLMProvider
 from rag.llm.prompts import QueryPrompts
+from rag.query_analyzer import QueryAnalyzer
+from rag.reranker import BBLReranker
 from cache import query_cache
 
 logger = logging.getLogger(__name__)
@@ -27,12 +29,14 @@ class RAGPipeline:
     def __init__(self):
         """Initialize RAG pipeline with all components."""
         logger.info("Initializing RAG Pipeline...")
-        
+
         self.document_processor = DocumentProcessor()
         self.text_chunker = TextChunker()
         self.vector_store = VectorStore()
         self.llm_provider = OpenAILLMProvider()
-        
+        self.query_analyzer = QueryAnalyzer(llm_provider=self.llm_provider)
+        self.reranker = BBLReranker(llm_provider=self.llm_provider)
+
         logger.info("RAG Pipeline initialized successfully")
 
     def _get_collection_name(self, user_id: int) -> str:
@@ -176,7 +180,7 @@ class RAGPipeline:
         top_k: int = DEFAULT_TOP_K
     ) -> Tuple[str, List[Dict[str, Any]], float]:
         """
-        Query the RAG system.
+        Query the RAG system with intelligent query analysis.
 
         Args:
             user_id: User ID
@@ -197,22 +201,36 @@ class RAGPipeline:
             return cached_result
 
         collection_name = self._get_collection_name(user_id)
-        
-        # Get query embedding
-        query_embedding = self.llm_provider.get_embeddings([query_text])[0]
-        
-        # Search vector store
+
+        # STEP 1: Analyze query to extract metadata
+        logger.info(f"Analyzing query: {query_text}")
+        query_analysis = self.query_analyzer.analyze(query_text)
+        logger.info(f"Query analysis: functie_types={query_analysis.functie_types}, "
+                   f"bouw_type={query_analysis.bouw_type}, thema={query_analysis.thema}, "
+                   f"confidence={query_analysis.confidence:.2f}")
+
+        # STEP 2: Get query embedding using enhanced query
+        # Use enhanced query for better semantic matching
+        query_for_embedding = query_analysis.enhanced_query
+        logger.info(f"Using enhanced query for embedding: {query_for_embedding}")
+        query_embedding = self.llm_provider.get_embeddings([query_for_embedding])[0]
+
+        # STEP 3: Search vector store (retrieve more candidates for filtering)
+        # Fetch 3x more results than needed, so we can filter and rerank
+        search_top_k = min(top_k * 3, 20)  # Max 20 candidates
         search_results = self.vector_store.search(
             collection_name=collection_name,
             query_embedding=query_embedding,
             user_id=user_id,
-            top_k=top_k
+            top_k=search_top_k
         )
-        
-        # Filter by relevance
+
+        logger.info(f"Retrieved {len(search_results)} candidate chunks from vector store")
+
+        # STEP 4: Filter by relevance and add metadata
         sources = []
         context_texts = []
-        
+
         for result in search_results:
             if result.score >= SIMILARITY_THRESHOLD:
                 source = {
@@ -221,14 +239,23 @@ class RAGPipeline:
                     "filename": result.payload["filename"],
                     "score": result.score,
                     "chunk_index": result.payload["chunk_index"],
+                    # BBL metadata
                     "artikel_label": result.payload.get("artikel_label", ""),
-                    "artikel_titel": result.payload.get("artikel_titel", "")
+                    "artikel_titel": result.payload.get("artikel_titel", ""),
+                    "artikel_nummer": result.payload.get("artikel_nummer", ""),
+                    "hoofdstuk_nr": result.payload.get("hoofdstuk_nr", ""),
+                    "hoofdstuk_titel": result.payload.get("hoofdstuk_titel", ""),
+                    "afdeling_nr": result.payload.get("afdeling_nr", ""),
+                    "afdeling_titel": result.payload.get("afdeling_titel", ""),
+                    # Query analysis metadata
+                    "query_analysis": query_analysis.to_dict()
                 }
                 sources.append(source)
                 context_texts.append(result.payload["text"])
-        
+
         # If not enough high-quality results, take top results above minimum threshold
         if len(sources) == 0 and search_results:
+            logger.info(f"No sources with score >= {SIMILARITY_THRESHOLD}, using fallback with threshold {MINIMUM_RELEVANCE_THRESHOLD}")
             for result in search_results[:3]:
                 if result.score >= MINIMUM_RELEVANCE_THRESHOLD:
                     source = {
@@ -236,15 +263,41 @@ class RAGPipeline:
                         "document_id": result.payload["document_id"],
                         "filename": result.payload["filename"],
                         "score": result.score,
-                        "chunk_index": result.payload["chunk_index"]
+                        "chunk_index": result.payload["chunk_index"],
+                        # BBL metadata
+                        "artikel_label": result.payload.get("artikel_label", ""),
+                        "artikel_titel": result.payload.get("artikel_titel", ""),
+                        "artikel_nummer": result.payload.get("artikel_nummer", ""),
+                        "hoofdstuk_nr": result.payload.get("hoofdstuk_nr", ""),
+                        "hoofdstuk_titel": result.payload.get("hoofdstuk_titel", ""),
+                        # Query analysis metadata
+                        "query_analysis": query_analysis.to_dict()
                     }
                     sources.append(source)
                     context_texts.append(result.payload["text"])
-        
+
+        logger.info(f"Filtered to {len(sources)} sources with score >= {SIMILARITY_THRESHOLD} or fallback")
+
         # Return empty if no relevant results
         if not sources:
             return "Geen relevante informatie gevonden.", [], time.time() - start_time
-        
+
+        # STEP 5: Rerank sources based on metadata matching
+        # Use LLM verification for top candidates if confidence is low
+        use_llm_reranking = query_analysis.confidence < 0.6  # Use LLM if uncertain
+        sources = self.reranker.rerank(
+            sources=sources,
+            query_text=query_text,
+            query_analysis=query_analysis.to_dict(),
+            use_llm=use_llm_reranking,
+            top_k=min(top_k, len(sources))  # Limit to requested top_k
+        )
+
+        logger.info(f"Reranked to top {len(sources)} sources (LLM verification: {use_llm_reranking})")
+
+        # Update context_texts after reranking
+        context_texts = [source["text"] for source in sources]
+
         # Build context
         context = "\n\n".join([f"[{i+1}] {text}" for i, text in enumerate(context_texts)])
         
@@ -280,7 +333,7 @@ class RAGPipeline:
         top_k: int = DEFAULT_TOP_K
     ) -> Tuple[str, List[Dict[str, Any]], float]:
         """
-        Query with conversation history.
+        Query with conversation history and intelligent query analysis.
 
         Args:
             user_id: User ID
@@ -292,27 +345,33 @@ class RAGPipeline:
             Tuple of (answer, sources, processing_time)
         """
         start_time = time.time()
-        
+
         # Validate top_k
         top_k = max(1, min(top_k, MAX_TOP_K))
-        
+
         collection_name = self._get_collection_name(user_id)
-        
-        # Get query embedding
-        query_embedding = self.llm_provider.get_embeddings([query_text])[0]
-        
-        # Search
+
+        # Analyze query
+        query_analysis = self.query_analyzer.analyze(query_text)
+        logger.info(f"Chat query analysis: {query_analysis.to_dict()}")
+
+        # Get query embedding using enhanced query
+        query_for_embedding = query_analysis.enhanced_query
+        query_embedding = self.llm_provider.get_embeddings([query_for_embedding])[0]
+
+        # Search with more candidates
+        search_top_k = min(top_k * 3, 20)
         search_results = self.vector_store.search(
             collection_name=collection_name,
             query_embedding=query_embedding,
             user_id=user_id,
-            top_k=top_k
+            top_k=search_top_k
         )
         
         # Filter by relevance
         sources = []
         context_texts = []
-        
+
         for result in search_results:
             if result.score >= SIMILARITY_THRESHOLD:
                 source = {
@@ -322,11 +381,15 @@ class RAGPipeline:
                     "score": result.score,
                     "chunk_index": result.payload["chunk_index"],
                     "artikel_label": result.payload.get("artikel_label", ""),
-                    "artikel_titel": result.payload.get("artikel_titel", "")
+                    "artikel_titel": result.payload.get("artikel_titel", ""),
+                    "artikel_nummer": result.payload.get("artikel_nummer", ""),
+                    "hoofdstuk_nr": result.payload.get("hoofdstuk_nr", ""),
+                    "hoofdstuk_titel": result.payload.get("hoofdstuk_titel", ""),
+                    "query_analysis": query_analysis.to_dict()
                 }
                 sources.append(source)
                 context_texts.append(result.payload["text"])
-        
+
         if len(sources) == 0 and search_results:
             for result in search_results[:3]:
                 if result.score >= MINIMUM_RELEVANCE_THRESHOLD:
@@ -335,7 +398,10 @@ class RAGPipeline:
                         "document_id": result.payload["document_id"],
                         "filename": result.payload["filename"],
                         "score": result.score,
-                        "chunk_index": result.payload["chunk_index"]
+                        "chunk_index": result.payload["chunk_index"],
+                        "artikel_label": result.payload.get("artikel_label", ""),
+                        "artikel_titel": result.payload.get("artikel_titel", ""),
+                        "query_analysis": query_analysis.to_dict()
                     }
                     sources.append(source)
                     context_texts.append(result.payload["text"])
