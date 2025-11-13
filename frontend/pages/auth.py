@@ -3,6 +3,7 @@ Authentication page for login.
 """
 import streamlit as st
 from utils.auth import login
+from components.footer import show_footer
 
 
 def show_auth_page(cookies):
@@ -61,3 +62,6 @@ def show_auth_page(cookies):
     """, unsafe_allow_html=True)
 
     st.markdown('</div></div>', unsafe_allow_html=True)
+
+    # Footer with version info
+    show_footer()

@@ -8,6 +8,7 @@ from utils.document_helpers import get_bbl_document_count
 from pages.query import show_query_page
 from pages.documents import show_manage_documents_page
 from pages.admin import show_admin_panel
+from components.footer import show_footer
 
 
 def show_main_page(cookies):
@@ -87,3 +88,6 @@ def show_main_page(cookies):
         show_manage_documents_page()
     elif page == "Admin Panel":
         show_admin_panel()
+
+    # Footer with version info
+    show_footer()
