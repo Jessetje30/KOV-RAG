@@ -6,6 +6,7 @@ from services.api_client import api_request
 from utils.auth import logout
 from utils.document_helpers import get_bbl_document_count
 from pages.query import show_query_page
+from pages.chat import show_chat_page
 from pages.documents import show_manage_documents_page
 from pages.admin import show_admin_panel
 from components.footer import show_footer
@@ -52,7 +53,7 @@ def show_main_page(cookies):
         st.markdown("---")
 
         # Navigation - add Admin Panel for admins
-        nav_options = ["Bbl Vragen Stellen", "Bbl Documenten"]
+        nav_options = ["Bbl Vragen Stellen", "Bbl Chat", "Bbl Documenten"]
         if st.session_state.user.get('role') == 'admin':
             nav_options.append("Admin Panel")
 
@@ -84,6 +85,8 @@ def show_main_page(cookies):
     # Main content
     if page == "Bbl Vragen Stellen":
         show_query_page()
+    elif page == "Bbl Chat":
+        show_chat_page()
     elif page == "Bbl Documenten":
         show_manage_documents_page()
     elif page == "Admin Panel":

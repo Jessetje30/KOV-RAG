@@ -18,6 +18,7 @@ from assets.styles import apply_custom_styles
 from utils.auth import initialize_session
 from pages.auth import show_auth_page
 from pages.main import show_main_page
+from pages.setup_account import show_setup_account_page
 
 
 # Initialize cookie manager for persistent login
@@ -45,10 +46,19 @@ def main():
     # Initialize session state with cookie support
     initialize_session(cookies)
 
-    # Route to appropriate page based on authentication state
-    if st.session_state.token is None or st.session_state.user is None:
+    # Check for invitation token in query params
+    query_params = st.query_params
+    invitation_token = query_params.get("token", None)
+
+    # Route to appropriate page
+    if invitation_token:
+        # Show setup account page for invited users
+        show_setup_account_page(cookies)
+    elif st.session_state.token is None or st.session_state.user is None:
+        # Show login page
         show_auth_page(cookies)
     else:
+        # Show main application
         show_main_page(cookies)
 
 
