@@ -46,7 +46,7 @@ if curl -s http://localhost:6333 > /dev/null 2>&1; then
     echo "✓ Qdrant is already running"
 else
     echo "Starting Qdrant..."
-    docker compose up -d
+    docker compose up -d qdrant
 
     echo "Waiting for Qdrant to be ready..."
     sleep 5

@@ -36,7 +36,7 @@ fi
 
 # Stop Qdrant
 echo "Stopping Qdrant..."
-docker compose down
+docker compose stop qdrant
 
 echo ""
 echo "All services stopped successfully!"
