@@ -7,6 +7,7 @@ Behoud volledige hiërarchische context
 from typing import List, Dict
 from datetime import datetime
 from .xml_parser import Artikel
+from .metadata_extractor import BBLMetadataExtractor
 
 
 class BBLChunker:
@@ -17,6 +18,7 @@ class BBLChunker:
     - Behoud juridische structuur
     - Makkelijk citeerbaar met artikel nummer
     - Volledige context altijd aanwezig
+    - Verrijkt met functie types en thema tags voor betere filtering
     """
 
     def __init__(self, version_date: str, bwb_identifier: str = "BWBR0041297"):
@@ -27,6 +29,7 @@ class BBLChunker:
         """
         self.version_date = version_date
         self.bwb_identifier = bwb_identifier
+        self.metadata_extractor = BBLMetadataExtractor()
 
     def chunk_artikel(self, artikel: Artikel) -> Dict:
         """
@@ -57,7 +60,15 @@ class BBLChunker:
 
         full_text = "".join(text_parts).strip()
 
-        # Metadata
+        # Extract enhanced metadata (functie types, bouw type, thema tags)
+        enhanced_metadata = self.metadata_extractor.enrich_metadata(
+            artikel_text=full_text,
+            hoofdstuk_nr=artikel.hoofdstuk_nr,
+            artikel_titel=artikel.titel,
+            afdeling_titel=artikel.afdeling_titel
+        )
+
+        # Base metadata
         metadata = {
             "document_type": "BBL",
             "bwb_identifier": self.bwb_identifier,
@@ -74,7 +85,11 @@ class BBLChunker:
             "leden_count": len(artikel.leden),
             "source_url": f"https://wetten.overheid.nl/{self.bwb_identifier}/{self.version_date}",
             "chunk_type": "artikel",
-            "processed_at": datetime.now().isoformat()
+            "processed_at": datetime.now().isoformat(),
+            # Enhanced metadata for intelligent filtering
+            "functie_types": enhanced_metadata["functie_types"],
+            "bouw_type": enhanced_metadata["bouw_type"],
+            "thema_tags": enhanced_metadata["thema_tags"]
         }
 
         return {

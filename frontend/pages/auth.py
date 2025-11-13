@@ -3,6 +3,7 @@ Authentication page for login.
 """
 import streamlit as st
 from utils.auth import login
+from components.footer import show_footer
 
 
 def show_auth_page(cookies):
@@ -17,7 +18,7 @@ def show_auth_page(cookies):
         <div class="jcc" style="min-height: 60vh;">
             <div style="max-width: 400px; text-align: center;">
                 <div style="font-size: 2rem; font-weight: 700; color: #FF6B35; margin-bottom: 0.5rem;">
-                    BBL RAG
+                    Bbl RAG
                 </div>
                 <div style="font-size: 1rem; font-weight: 600; color: #3F3F46; margin-bottom: 0.25rem;">
                     Kijk op Veiligheid
@@ -61,3 +62,6 @@ def show_auth_page(cookies):
     """, unsafe_allow_html=True)
 
     st.markdown('</div></div>', unsafe_allow_html=True)
+
+    # Footer with version info
+    show_footer()

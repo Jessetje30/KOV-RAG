@@ -8,6 +8,7 @@ from utils.document_helpers import get_bbl_document_count
 from pages.query import show_query_page
 from pages.documents import show_manage_documents_page
 from pages.admin import show_admin_panel
+from components.footer import show_footer
 
 
 def show_main_page(cookies):
@@ -34,8 +35,8 @@ def show_main_page(cookies):
 
     # Sidebar
     with st.sidebar:
-        # BBL Branding
-        st.markdown("## BBL RAG")
+        # Bbl Branding
+        st.markdown("## Bbl RAG")
         st.markdown("**Kijk op Veiligheid**")
         st.caption("Besluit Bouwwerken Leefomgeving")
 
@@ -51,7 +52,7 @@ def show_main_page(cookies):
         st.markdown("---")
 
         # Navigation - add Admin Panel for admins
-        nav_options = ["BBL Vragen Stellen", "BBL Documenten"]
+        nav_options = ["Bbl Vragen Stellen", "Bbl Documenten"]
         if st.session_state.user.get('role') == 'admin':
             nav_options.append("Admin Panel")
 
@@ -63,14 +64,14 @@ def show_main_page(cookies):
 
         st.markdown("---")
 
-        # Info over BBL documenten (dynamisch)
+        # Info over Bbl documenten (dynamisch)
         documents_response = api_request("/api/documents", auth=True)
         if documents_response:
             doc_count = get_bbl_document_count(documents_response)
             if doc_count > 0:
-                st.info(f"**BBL Database**\n\n{doc_count} artikelen beschikbaar")
+                st.info(f"**Bbl Database**\n\n{doc_count} artikelen beschikbaar")
             else:
-                st.warning("**Geen BBL documenten**\n\nUpload BBL documenten via het Admin Panel")
+                st.warning("**Geen Bbl documenten**\n\nUpload Bbl documenten via het Admin Panel")
         else:
             st.warning("**Kan documenten niet laden**")
 
@@ -81,9 +82,12 @@ def show_main_page(cookies):
             st.rerun()
 
     # Main content
-    if page == "BBL Vragen Stellen":
+    if page == "Bbl Vragen Stellen":
         show_query_page()
-    elif page == "BBL Documenten":
+    elif page == "Bbl Documenten":
         show_manage_documents_page()
     elif page == "Admin Panel":
         show_admin_panel()
+
+    # Footer with version info
+    show_footer()
