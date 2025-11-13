@@ -1,5 +1,5 @@
 """
-Admin panel for user management and BBL document uploads.
+Admin panel for user management and Bbl document uploads.
 """
 import streamlit as st
 from services.api_client import api_request
@@ -24,7 +24,7 @@ def show_admin_panel():
     st.markdown("---")
 
     # Tabs for different admin functions
-    tab1, tab2, tab3 = st.tabs(["Gebruiker Uitnodigen", "Gebruikers Beheren", "BBL Uploaden"])
+    tab1, tab2, tab3 = st.tabs(["Gebruiker Uitnodigen", "Gebruikers Beheren", "Bbl Uploaden"])
 
     with tab1:
         st.subheader("Nieuwe Gebruiker Uitnodigen")
@@ -95,13 +95,13 @@ def show_admin_panel():
                     st.markdown("---")
 
     with tab3:
-        st.subheader("BBL Documenten Uploaden")
-        st.markdown("Upload PDF, DOCX of TXT bestanden met BBL artikelen om ze doorzoekbaar te maken.")
+        st.subheader("Bbl Documenten Uploaden")
+        st.markdown("Upload PDF, DOCX of TXT bestanden met Bbl artikelen om ze doorzoekbaar te maken.")
 
         uploaded_file = st.file_uploader(
             "Kies een bestand",
             type=['pdf', 'docx', 'txt', 'xml'],
-            help="Upload een document om toe te voegen aan de kennisbank (XML voor BBL documenten)",
+            help="Upload een document om toe te voegen aan de kennisbank (XML voor Bbl documenten)",
             key="admin_upload"
         )
 

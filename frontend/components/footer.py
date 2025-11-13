@@ -23,7 +23,7 @@ def show_footer():
                 Git: <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">{GIT_COMMIT}</code>
                 on <strong>{branch_display}</strong>
             </span><br>
-            <span style="font-size: 0.8em;">Kijk op Veiligheid - BBL RAG System</span>
+            <span style="font-size: 0.8em;">Kijk op Veiligheid - Bbl RAG System</span>
         </div>
         """,
         unsafe_allow_html=True

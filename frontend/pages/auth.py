@@ -18,7 +18,7 @@ def show_auth_page(cookies):
         <div class="jcc" style="min-height: 60vh;">
             <div style="max-width: 400px; text-align: center;">
                 <div style="font-size: 2rem; font-weight: 700; color: #FF6B35; margin-bottom: 0.5rem;">
-                    BBL RAG
+                    Bbl RAG
                 </div>
                 <div style="font-size: 1rem; font-weight: 600; color: #3F3F46; margin-bottom: 0.25rem;">
                     Kijk op Veiligheid

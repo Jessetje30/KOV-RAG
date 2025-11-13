@@ -1,5 +1,5 @@
 """
-BBL Query page - Ask questions about BBL documents.
+Bbl Query page - Ask questions about Bbl documents.
 """
 import streamlit as st
 import re
@@ -82,7 +82,7 @@ def detect_and_render_tables(text: str):
 
 def show_query_page():
     """Display document query interface."""
-    st.markdown('<div class="main-header">Stel BBL Vragen</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">Stel Bbl Vragen</div>', unsafe_allow_html=True)
     st.markdown("*Stel vragen over het Besluit Bouwwerken Leefomgeving*")
 
     # Check if user has any documents
@@ -90,11 +90,11 @@ def show_query_page():
     has_documents = documents_response and documents_response.get("total_count", 0) > 0
 
     if not has_documents:
-        st.warning("Geen BBL documenten beschikbaar.")
-        st.info("Het BBL moet worden geladen door een administrator. Neem contact op met de systeembeheerder.")
+        st.warning("Geen Bbl documenten beschikbaar.")
+        st.info("Het Bbl moet worden geladen door een administrator. Neem contact op met de systeembeheerder.")
         return
 
-    # Get BBL document count using utility function
+    # Get Bbl document count using utility function
     bbl_count = get_bbl_document_count(documents_response)
 
     # Model information box
@@ -102,18 +102,18 @@ def show_query_page():
     <div class="info-box">
         <strong>Model:</strong> OpenAI GPT-4-turbo<br>
         <strong>Embeddings:</strong> text-embedding-3-large (3072 dimensies)<br>
-        <strong>Database:</strong> {bbl_count} BBL artikelen beschikbaar
+        <strong>Database:</strong> {bbl_count} Bbl artikelen beschikbaar
     </div>
     """, unsafe_allow_html=True)
 
-    # BBL Example questions
+    # Bbl Example questions
     st.markdown("**💡 Voorbeeldvragen:**")
     example_col1, example_col2 = st.columns(2)
 
     with example_col1:
         st.markdown("""
         - Wat zijn de eisen voor brandveiligheid in kantoorgebouwen?
-        - Wat staat er in artikel 4.101 van het BBL?
+        - Wat staat er in artikel 4.101 van het Bbl?
         - Wat zijn de MPG-eisen voor nieuwbouw?
         """)
 
@@ -128,7 +128,7 @@ def show_query_page():
 
     # Query input
     query = st.text_area(
-        "Jouw BBL Vraag",
+        "Jouw Bbl Vraag",
         placeholder="Bijvoorbeeld: Wat zijn de brandveiligheidseisen voor kantoren?",
         height=100,
         key="bbl_query_input",
@@ -136,7 +136,7 @@ def show_query_page():
     )
 
     # Submit button
-    submit = st.button("Zoek in BBL", use_container_width=True)
+    submit = st.button("Zoek in Bbl", use_container_width=True)
 
     if submit:
         # Validate query input
@@ -144,7 +144,7 @@ def show_query_page():
         if not is_valid:
             st.error(error_msg)
         else:
-            with st.spinner("BBL doorzoeken..."):
+            with st.spinner("Bbl doorzoeken..."):
                 # Beperk tot top 5 meest relevante artikelen
                 response = api_request(
                     "/api/query",
@@ -169,7 +169,7 @@ def show_query_page():
         # Only display sources if there are any (relevance >= 0.4)
         if response["sources"]:
             # Display sources
-            st.markdown("### Gevonden BBL Artikelen")
+            st.markdown("### Gevonden Bbl Artikelen")
 
             # Show threshold info
             st.markdown("""
@@ -213,7 +213,7 @@ def show_query_page():
                     elif artikel_label:
                         title = f"{idx}. {artikel_label}"
                     else:
-                        title = f"{idx}. BBL Artikel"
+                        title = f"{idx}. Bbl Artikel"
 
                 # Display title with score badge
                 st.markdown(f"#### {title}")
