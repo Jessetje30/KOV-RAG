@@ -215,15 +215,38 @@ class RAGPipeline:
         logger.info(f"Using enhanced query for embedding: {query_for_embedding}")
         query_embedding = self.llm_provider.get_embeddings([query_for_embedding])[0]
 
-        # STEP 3: Search vector store (retrieve more candidates for filtering)
+        # STEP 3: Search vector store WITH metadata filtering
         # Fetch 3x more results than needed, so we can filter and rerank
         search_top_k = min(top_k * 3, 20)  # Max 20 candidates
-        search_results = self.vector_store.search(
-            collection_name=collection_name,
-            query_embedding=query_embedding,
-            user_id=user_id,
-            top_k=search_top_k
+
+        # Use metadata filtering if query analysis found relevant metadata
+        use_metadata_filters = (
+            query_analysis.functie_types or
+            query_analysis.bouw_type or
+            query_analysis.thema or
+            query_analysis.hoofdstuk_nr
         )
+
+        if use_metadata_filters:
+            logger.info("Using metadata-filtered search (functie/bouw/thema filtering enabled)")
+            search_results = self.vector_store.search_with_metadata_filters(
+                collection_name=collection_name,
+                query_embedding=query_embedding,
+                user_id=user_id,
+                top_k=search_top_k,
+                functie_types=query_analysis.functie_types if query_analysis.functie_types else None,
+                bouw_type=query_analysis.bouw_type,
+                thema_tags=[query_analysis.thema] if query_analysis.thema else None,
+                hoofdstuk_nr=query_analysis.hoofdstuk_nr
+            )
+        else:
+            logger.info("Using standard search (no metadata filters detected)")
+            search_results = self.vector_store.search(
+                collection_name=collection_name,
+                query_embedding=query_embedding,
+                user_id=user_id,
+                top_k=search_top_k
+            )
 
         logger.info(f"Retrieved {len(search_results)} candidate chunks from vector store")
 
@@ -359,14 +382,37 @@ class RAGPipeline:
         query_for_embedding = query_analysis.enhanced_query
         query_embedding = self.llm_provider.get_embeddings([query_for_embedding])[0]
 
-        # Search with more candidates
+        # Search with more candidates and metadata filtering
         search_top_k = min(top_k * 3, 20)
-        search_results = self.vector_store.search(
-            collection_name=collection_name,
-            query_embedding=query_embedding,
-            user_id=user_id,
-            top_k=search_top_k
+
+        # Use metadata filtering if query analysis found relevant metadata
+        use_metadata_filters = (
+            query_analysis.functie_types or
+            query_analysis.bouw_type or
+            query_analysis.thema or
+            query_analysis.hoofdstuk_nr
         )
+
+        if use_metadata_filters:
+            logger.info("Chat: Using metadata-filtered search")
+            search_results = self.vector_store.search_with_metadata_filters(
+                collection_name=collection_name,
+                query_embedding=query_embedding,
+                user_id=user_id,
+                top_k=search_top_k,
+                functie_types=query_analysis.functie_types if query_analysis.functie_types else None,
+                bouw_type=query_analysis.bouw_type,
+                thema_tags=[query_analysis.thema] if query_analysis.thema else None,
+                hoofdstuk_nr=query_analysis.hoofdstuk_nr
+            )
+        else:
+            logger.info("Chat: Using standard search (no metadata filters)")
+            search_results = self.vector_store.search(
+                collection_name=collection_name,
+                query_embedding=query_embedding,
+                user_id=user_id,
+                top_k=search_top_k
+            )
         
         # Filter by relevance
         sources = []
