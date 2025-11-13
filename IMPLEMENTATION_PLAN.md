@@ -5,6 +5,57 @@ Dit is een complete, stap-voor-stap implementation guide voor het bouwen van een
 
 ---
 
+## ⚠️ BELANGRIJKE INSTRUCTIE: Gebruik Altijd Laatste Versies
+
+**🔄 Package Versioning Strategy:**
+
+Dit implementation plan is geschreven om **toekomstbestendig** te zijn. Daarom gelden de volgende regels:
+
+### ✅ ALTIJD DOEN:
+```bash
+# ✅ CORRECT: Laat package manager de laatste versie kiezen
+npm install next react react-dom
+npm install @clerk/nextjs @prisma/client openai
+
+# ✅ CORRECT: Latest van specific package
+npm install @prisma/client@latest
+```
+
+### ❌ NOOIT DOEN:
+```bash
+# ❌ FOUT: Specifieke versienummers (wordt snel outdated)
+npm install next@14.0.4 react@18.2.0
+npm install @clerk/nextjs@4.29.3
+```
+
+### 📦 Hoe Package Managers Werken:
+
+- **npm/pnpm/yarn** kiezen automatisch de **laatste compatibele versie** op basis van semver
+- Als package A versie `^2.0.0` nodig heeft, installeert npm de nieuwste `2.x.x` (bijv. `2.5.3`)
+- Dit garandeert dat je altijd de **nieuwste bug fixes en features** hebt binnen major version
+
+### 🎯 Waarom Dit Belangrijk Is:
+
+1. **Toekomstbestendig**: Dit plan kan over 6 maanden nog steeds worden gebruikt
+2. **Security updates**: Automatisch de laatste security patches
+3. **Bug fixes**: Nieuwste bug fixes zonder manual updates
+4. **Best practices**: Volgt JavaScript/TypeScript ecosystem standards
+
+### 🚨 Breaking Changes:
+
+Als je een **breaking change** error krijgt (bijv. na major version update):
+1. Check de package's **CHANGELOG** of **migration guide**
+2. Update de code volgens de migration guide
+3. Dit gebeurt zelden omdat package managers bij `npm install` binnen major versions blijven
+
+### 📚 Documentatie:
+
+Bij twijfel over API changes:
+- Check altijd de **official documentation** van het package
+- Gebruik de **latest docs**, niet versioned docs (tenzij specifieke versie nodig is)
+
+---
+
 ## 📋 Project Overview
 
 ### Wat gaan we bouwen?
